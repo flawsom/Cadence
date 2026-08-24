@@ -2,6 +2,7 @@ import { TaskRow } from "@/components/app/TaskRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { fmtHours, prettyDate } from "@/lib/planning";
 import { useQuery } from "convex/react";
 import { ArrowLeft, TriangleAlert } from "lucide-react";
@@ -24,7 +25,25 @@ const LEVELS: Record<number, { label: string; className: string }> = {
 
 export default function PlanDetailView() {
   const { planId } = useParams<{ planId: string }>();
-  const detail = useQuery(api.plans.detail, planId ? { planId: planId as never } : "skip");
+  // Guard against malformed ids: an invalid id would make Convex throw inside
+  // useQuery and crash into the error boundary instead of a friendly screen.
+  const validId = !!planId && /^[a-z0-9]{32}$/.test(planId);
+  const detail = useQuery(
+    api.plans.detail,
+    validId ? { planId: planId as Id<"plans"> } : "skip",
+  );
+
+  if (!validId) {
+    return (
+      <div className="mx-auto max-w-2xl py-20 text-center">
+        <h1 className="font-display text-2xl font-semibold">That plan isn&apos;t yours to see</h1>
+        <p className="mt-2 text-sm text-muted-foreground">It may have been removed, or the link is off.</p>
+        <Link to="/dashboard/plans">
+          <Button variant="outline" className="mt-5 rounded-full">Back to plans</Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (detail === undefined) {
     return <div className="mx-auto max-w-4xl animate-pulse text-sm text-muted-foreground">Opening schedule…</div>;

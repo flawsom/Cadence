@@ -127,7 +127,7 @@ export default function TodayView() {
               <h2 className="mb-2 px-1 text-sm font-semibold">{planTitle}</h2>
               <div className="flex flex-col gap-2">
                 {tasks.map((t) => (
-                  <TaskRow key={t._id} task={t} accent={ACCENTS[t.planAccent]} todayKey={todayKey} />
+                  <TaskRow key={t._id} task={t} accent={ACCENTS[t.planAccent] ?? ACCENTS[0]!} todayKey={todayKey} />
                 ))}
               </div>
             </div>
