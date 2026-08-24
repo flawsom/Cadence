@@ -1,4 +1,5 @@
 import { Heatmap } from "@/components/app/Heatmap";
+import { TrendChart } from "@/components/app/TrendChart";
 import { TaskRow } from "@/components/app/TaskRow";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
@@ -13,7 +14,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
@@ -26,6 +27,8 @@ export default function TodayView() {
   const stats = useQuery(api.tasks.getStats, { todayKey });
   const syncRollover = useMutation(api.tasks.syncRollover);
   const syncedDay = useRef<string | null>(null);
+  const [progressView, setProgressView] = useState<"heatmap" | "trend">("heatmap");
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   // Roll unfinished work forward once per day, then surface it honestly.
   useEffect(() => {
@@ -102,7 +105,48 @@ export default function TodayView() {
         </span>
       </section>
 
-      <Heatmap heatmap={stats.heatmap} />
+      {/* Progress: interactive heatmap + trend line, switchable */}
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="px-1 text-sm font-semibold">Your last 17 weeks</h2>
+          <div
+            className="flex rounded-full border border-border/70 bg-card p-0.5"
+            role="tablist"
+            aria-label="Progress view"
+          >
+            {(
+              [
+                ["heatmap", "Squares"],
+                ["trend", "Trend"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={progressView === key}
+                onClick={() => setProgressView(key)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  progressView === key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {progressView === "heatmap" ? (
+          <Heatmap
+            heatmap={stats.heatmap}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+          />
+        ) : (
+          <TrendChart data={stats.heatmap} />
+        )}
+      </section>
 
       {/* Rollover banner */}
       {board.carriedCount > 0 && (
