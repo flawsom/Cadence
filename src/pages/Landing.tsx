@@ -182,7 +182,7 @@ function DemoCard() {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              Tuesday · Rust in 30 days
+              Tuesday · Rust in 30 days · Interactive demo
             </p>
             <h3 className="mt-1 font-display text-xl font-semibold">A Tuesday, sized to your evening</h3>
           </div>
