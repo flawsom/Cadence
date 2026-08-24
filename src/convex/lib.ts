@@ -68,10 +68,44 @@ function hoursFor(title: string): number {
 function cleanLine(line: string): string {
   return line
     .replace(/^\s*(?:[-*\u2022\u00b7\u2013\u2014]+)\s*/, "")
+    // Strip structural prefixes — "Week 3:", "Module 2:", "Topics:" etc. —
+    // but keep the actual content that follows.
+    .replace(/^\s*(?:week|module|unit|chapter|lesson|day|part|section|domain|topic|topics)\s*\d*\s*[.:\-)]\s*/i, "")
     .replace(/^\s*\d+(?:\.\d+)*\s*[.)\]:]\s*/, "")
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** A line like "hashing; sorting; graphs" is really N topics, not one. */
+function splitListLines(lines: string[]): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    if (line.includes(";")) {
+      const parts = line
+        .split(";")
+        .map((p) => p.trim())
+        .filter((p) => p.split(/\s+/).length >= 2);
+      if (parts.length >= 2) {
+        out.push(...parts);
+        continue;
+      }
+    }
+    const commas = line.split(",");
+    if (commas.length >= 3) {
+      const parts = commas.map((p) => p.trim());
+      if (parts.every((p) => p.split(/\s+/).length <= 8 && p.length >= 3)) {
+        out.push(...parts);
+        continue;
+      }
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+/** Header-ish lines name the plan; they are not topics themselves. */
+const HEADER_RE =
+  /^(syllabus|course outline|course plan|blueprint)\b|^exam\b[^:\n]*\bblueprint\b/i;
 
 /** Deterministic fallback parser: real sequencing, no AI required. */
 export function heuristicParse(raw: string): {
@@ -80,11 +114,13 @@ export function heuristicParse(raw: string): {
 } {
   const cleaned = raw.replace(/\r/g, "").trim();
 
-  const lines = cleaned
+  const rawLines = cleaned
     .split("\n")
     .map(cleanLine)
-    .filter((l) => l.length > 1)
-    .slice(0, 40);
+    .filter((l) => l.length > 1);
+
+  const header = rawLines.find((l) => HEADER_RE.test(l));
+  const lines = splitListLines(rawLines.filter((l) => !HEADER_RE.test(l))).slice(0, 40);
 
   if (lines.length >= 3) {
     const topics = lines.map((title, i) => ({
@@ -92,11 +128,23 @@ export function heuristicParse(raw: string): {
       hours: hoursFor(title),
       level: levelFor(title, lines.length > 1 ? i / (lines.length - 1) : 0),
     }));
-    return { title: makeTitle(lines[0]), topics };
+    return { title: makeTitle(header ?? lines[0]), topics };
+  }
+  if (header && !lines.length) {
+    return heuristicParse(header.replace(HEADER_RE, "").trim() || header);
   }
 
   // Single-subject mode: build a genuine fundamentals-to-advanced scaffold.
-  const subject = cleaned.split("\n")[0]?.trim() || "your new subject";
+  // "I want to learn Rust" should scaffold around Rust, not the whole sentence.
+  const subject =
+    cleaned
+      .split("\n")[0]
+      ?.trim()
+      .replace(
+        /^(?:i\s+(?:want|would\s+like)\s+to\s+|let'?s\s+)?(?:learn|study|master|understand|get\s+good\s+at)\s+(?:how\s+to\s+)?/i,
+        "",
+      )
+      .replace(/[.!\s]+$/, "") || "your new subject";
   const s = subject.slice(0, 60);
   const cap = s.charAt(0).toUpperCase() + s.slice(1);
   const topics: ParsedTopic[] = [
@@ -116,6 +164,12 @@ export function heuristicParse(raw: string): {
 }
 
 function makeTitle(firstLine: string): string {
-  const t = firstLine.replace(/^(syllabus|course outline|course)[:\s-]*/i, "").trim();
-  return (t.length > 60 ? `${t.slice(0, 57)}…` : t) || "Untitled plan";
+  // Strip document-y prefixes but KEEP the exam/subject name that follows.
+  const t = firstLine
+    .replace(/^(syllabus|course outline|course plan|course)[:\s-]*/i, "")
+    .replace(/^[\s\u2014\u2013\-:·]+/, "")
+    .replace(/[\s:\u2014\u2013-]+$/, "")
+    .trim();
+  const final = t || firstLine.replace(/[\s:]+$/, "").trim();
+  return (final.length > 60 ? `${final.slice(0, 57)}…` : final) || "Untitled plan";
 }
