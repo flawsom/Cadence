@@ -91,3 +91,20 @@ for (const s of SYLLABI) {
   }
   if (days.length > 3) console.log(`  … +${days.length - 3} more days`);
 }
+
+// ── Real university syllabus fixtures (the brutal ones) ──────────────────
+import { readFileSync } from "node:fs";
+for (const [file, hpd, target] of [
+  ["pcar2004-cloud.txt", 2, 30],
+  ["dspe3007-image.txt", 1.5, 21],
+  ["cspc2003-oop.txt", 2, 28],
+] as const) {
+  const input = readFileSync(`scripts/fixtures/${file}`, "utf8");
+  console.log(`\n${"=".repeat(72)}\nFIXTURE ${file}  (@${hpd}h/day, target ${target}d)\n${"-".repeat(72)}`);
+  const { title, topics } = heuristicParse(input);
+  console.log(`Plan title: ${title}   (${topics.length} topics)`);
+  for (const t of preview(topics, hpd).sequenced.slice(0, 14)) {
+    console.log(`  L${t.level}  ${t.title.slice(0, 70)}  ·  ${t.hours}h`);
+  }
+  if (topics.length > 14) console.log(`  … +${topics.length - 14} more`);
+}

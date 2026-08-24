@@ -1,0 +1,31 @@
+CSPC2003 OBJECT ORIENTED PROGRAMMING (3-0-0)
+
+Module-I(10 Hrs)
+Chapter 1:An Introduction to Programming.
+Different types of Programming languages, Differences between Compiler and Interpreter. Advantages of Object Oriented Programming, Features of Object Oriented Programming.
+Chapter 2 : Introduction to Java.
+What is Java? Why Java? History behind Java. Different versions of Java. Difference between C/C++ and Java. Features of Java, First Java Program, Prerequisites Before start writing a java program, writing the program, Compiling the program, Executing the program, JVM and its significance, Architecture of JVM.
+Chapter 3 : Understanding First Java program, Java Tokens, Datatypes, Operators, Different types of operators, Type casting, Control Structures and Arrays, different types of control structures , Conditional Statements, Loops/Iterators, Jumping statements, Java Arrays, Multidimensional Arrays , Taking input from keyboard , Command Line Arguments, Using Scanner Class, Using Buffered Reader Class.
+Module-II(08 Hrs)
+Chapter 1: Introduction to Classes and Objects.
+Classes, Methods, Objects, Description of Data Hiding and Data Encapsulation, Constructors, use of Static keyword in Java, Use of This keyword in Java, Array of Objects, Concept of Access Modifiers (Public, Private, Protected, Default).
+Chapter 2:   Inheritance 
+Understanding Inheritance, Types of Inheritance and Java Supported Inheritance, Significance of Inheritance, Constructor call in inheritance, Use of Super keyword in Java, Polymorphism, understanding polymorphism, Types of Polymorphism, Significance of Polymorphism in Java, Method Overloading, Constructor overloading, Method overriding, Dynamic Method Dispatching.
+Chapter 3 : String Manipulations.
+Introduction to different classes, String Class, String Buffer, String Builder, String Tokenizer, Concept of Wrapper Classes, Introduction to Wrapper Classes, Different predefined wrapper classes, predefined constructors for the wrapper classes , conversion of types from one type(Object) to another type (Primitive) and vice versa, concept of Auto boxing and Unboxing.
+Module-III(09 Hrs)
+Chapter 1: Data Abstraction
+Basics of Data Abstraction, Understanding Abstract classes, Understanding Interfaces, Multiple Inheritance using Interfaces, Packages, Introduction to Packages, Java API Packages, User Defined Packages, Accessing Packages, Error and Exception Handling , Introduction to error and exception , Types of exceptions and difference between the types, Run Time Stack Mechanism, Hierarchy of Exception Classes , Default Exception Handling in Java, User defined/ Customized Exception Handling , Understanding different Keywords( try,catch,finally,throw,throws), User defined exception classes, Commonly used Exceptions and their details.
+Chapter 2: Multithreading
+Introduction to Multithreading / Multitasking, Ways to define a Thread in Java , Thread naming and priorities, Thread execution prevention methods, (yield(),join(),sleep()), Concept of Synchronisation, Linear Thread communication, Basics of Deadlock  , Demon Thread, Improvement in Multithreading, Inner Classes , Introduction, Member Inner Class, Static Inner Class, Anonymous Inner Class.
+Module-IV(10 Hrs)
+Chapter 1: IO Streams (java.io package)
+Introduction, Byte Stream and Character Stream, Files and Random Access files, Serialization, Collection Frame work (java. util), Introduction, Util Package Interface, List, Set, Map etc, List Interfaces and Classes, Setter Interface and its Classes.
+Chapter 2: Applet
+Introduction, Life Cycle of an Applet, GUI with an Applet, Abstract Window Toolkit(AWT), Introduction to GUI, Description of Components and Containers, Components/Container hierarchy, Understanding different Components /Container Classes and their Constructors, Event Handling, Different mechanism of Event Handling, Listener Interface, Adapter Classes.
+Module-V(08 Hrs)
+Chapter 1: Swing(JFC)
+Introduction Difference b/w AWT and swing, Components Hierarchy, Panes, Individual Swings, Components, JLabel, JButton, JTextField, JTextArea.
+Chapter 2: JavaFX
+Getting started with JavaFX, Graphics, User Interface Components, Effects, Animation, and Media, Application Logic, Interoperability, JavaFX Scene Builder 2, Getting started with Scene Builder.
+Working with Scene Builder.

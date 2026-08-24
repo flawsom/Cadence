@@ -1,0 +1,38 @@
+DSPE3007 IMAGE PROCESSING (3-0-0)
+
+Course Objectives:
+•	To study the image fundamentals and mathematical transforms necessary for image processing.
+•	To study the image enhancement techniques 
+•	To study image restoration procedures. 
+•	To study the image compression procedures
+
+MODULE - I:	(08 Hours)
+INTRODUCTION AND DIGITAL IMAGE FUNDAMENTALS: Introduction: Origin, Steps in Digital Image Processing, Components. Digital Image Fundamentals: Elements of Visual Perception, Image Sampling and Quantization, Some Basic Relationships between pixels, Color Models.
+ 
+MODULE - II:	(08 Hours)
+IMAGE TRANSFORMATION: Introduction to the Fourier Transform, The Discrete Fourier Transform, Discrete Cosine Transform, Singular Value Decomposition and Principal Component Analysis.
+ 
+MODULE - III:	(10 Hours)
+IMAGE ENHANCEMENT: Spatial Domain: Some Simple Intensity Transformations, Histogram processing, Basics of Spatial Filtering, Smoothing and Sharpening Spatial Filtering. Frequency Domain: Smoothing and Sharpening frequency domain filters – Ideal, Butterworth and Gaussian filters. 
+
+MODULE - IV:	(08 Hours)
+IMAGE RESTORATION AND SEGMENTATION: Image Restoration: Noise models, Mean Filters, Order Statistics, Adaptive filters, Band reject Filters, Band pass Filters, Notch Filters, Optimum Notch Filtering, Inverse Filtering, Wiener filtering. Segmentation: Thresholding. 
+
+MODULE - V:	(08 Hours)
+WAVELETS AND IMAGE COMPRESSION: Wavelets: Background, Sub-band Coding, Multi-resolution Expansions. Compression: Fundamentals, Image Compression Models, Error Free compression- Variable Length Coding, Bit-Plane Coding, Lossless Predictive Coding, Lossy Compression, Lossy Predictive Coding, Transform Coding and Wavelet Coding. 
+
+Course Outcomes: 
+After completing this course, students will be able to:
+CO1:	To grasp the basics and image transforms necessary for image processing
+CO2:	To apply the image enhancement techniques.
+CO3:	To analyze and apply the image restoration procedures and segmentation tools.
+CO4:	To study the wavelet tools and the image compression procedures
+
+Text Book: 
+1.	Rafael C. Gonzales, Richard E. Woods, “Digital Image Processing”, Third Edition, Pearson Education, 2010. 
+
+References: 
+1.	S. Jayaraman, S Essakirajan, “Digital Image Processing”, Second Edition, Tata McGraw Hill, 2009 
+2.	Khalid Sayood, “Introduction to Data Compression”, Third Edition, Elsevier, 2006. 
+3.	Rafael C. Gonzalez, Richard E. Woods, Steven L. Eddins, “Digital Image Processing Using MATLAB”, Third Edition Tata Mc Graw Hill Pvt. Ltd., 2011.
+4.	https://cse19-iiith.vlabs.ac.in/index.html

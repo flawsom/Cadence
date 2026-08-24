@@ -1,0 +1,34 @@
+PCAR2004 CLOUD COMPUTING FOUNDATIONS (3-0-0)
+OVERALL COURSE OBJECTIVES: The objective of this course is to enable learners to understand and analyze the fundamentals of cloud computing, its architecture, and emerging trends, and apply distributed computing concepts practically using relevant programming tools in the field, ultimately preparing them for potential career paths in cloud-based roles.
+
+Module 1: Introduction to Cloud Computing [24 Hours]
+This self-paced introductory course sets learners on a journey through the essentials of cloud computing. Appropriate for students, business professionals, and those considering a career switch, it covers vital characteristics of cloud computing, emergent technologies, service models including IaaS, PaaS, and SaaS, and deployment models like Public, Private, and Hybrid. Learners will explore the offerings of major cloud service providers, study case scenarios, and delve into topics like cloud adoption, blockchain, analytics, AI, and cloud computing architecture components. They will also become familiar with different types of cloud storage options and emergent cloud trends. The course concludes with students deploying an application to the cloud using serverless architecture as a final project, thus providing them with a beneficial portfolio addition.
+
+Sub-Topics
+Overview of Cloud Computing
+Cloud Computing Models
+Components of Cloud Computing
+Emergent Trends and Practices
+Cloud Security and Monitoring, Case Studies, and Jobs
+Final Project and assignment
+
+Formative Assessments:
+5 quizzes and 1 peer-review assignment.
+Module 2: Cloud Computing Concepts, Part 1 [23 Hours]
+Cloud computing systems today, whether open-source or used inside companies, are built using a common set of core techniques, algorithms, and design philosophies – all centered around distributed systems. Learn about such fundamental distributed computing "concepts" for cloud computing.
+Some of these concepts include: clouds, MapReduce, key-value/NoSQL stores, classical distributed algorithms, widely-used distributed algorithms, scalability, trending areas, and much, much more! Know how these systems work from the inside out. Get your hands dirty using these concepts with provided homework exercises. In the programming assignments, implement some of these concepts in template code (programs) provided in the C++ programming language. Prior experience with C++ is required. The course also features interviews with leading researchers and managers, from both industry and academia.
+Sub-Topics
+Gossip, Membership, and Grids
+P2P Systems
+Key-Value Stores, Time, and Ordering
+Classical Distributed Algorithms
+Formative Assessments:
+6 quizzes, and 1 coding/lab assignments.
+
+LEARNING OUTCOMES: On successful completion of the course the students shall be able to:
+Understand the essential features and various service models of cloud computing along with the offerings of prominent market players.
+Analyze different components of cloud computing architecture such as data centers, virtual machines, containers, and cloud storage options.
+Demonstrate knowledge of emergent cloud trends such as DevOps, Hybrid and MultiCloud, and cloud security and monitoring.
+Evaluate the applications of cloud computing in areas like blockchain, analytics, AI, and job roles in this field.
+Develop competence in distributed computing concepts such as MapReduce, key-value/NoSQL stores, and scalability techniques used in cloud computing.
+Apply these concepts practically to build or manipulate cloud systems using programming languages like C++.
