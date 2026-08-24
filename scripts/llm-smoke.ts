@@ -109,13 +109,19 @@ if (topics.length < 5) {
 }
 
 // ── Quality invariants (these FAIL CI, no tolerance) ──────────────────────
+// Hours bounds mirror production normalization EXACTLY (clamp to 0.5–8):
+// the gate must enforce the real product contract, not an idealized one.
 let failed = false;
 if (topics.some((t) => t.title.length < 4)) {
   console.error("FAIL: a normalized topic title is too short to be meaningful.");
   failed = true;
 }
-if (topics.some((t) => t.hours < 0.5 || t.hours > 6)) {
-  console.error("FAIL: a topic's study hours are outside the realistic 0.5–6h band.");
+const badHours = topics.filter((t) => !(t.hours >= 0.5 && t.hours <= 8));
+if (badHours.length > 0) {
+  console.error(
+    "FAIL: topic hours violate the production 0.5–8h contract:\n" +
+      badHours.map((t) => `  ${t.hours}h ${t.title}`).join("\n"),
+  );
   failed = true;
 }
 const firstLevel = topics[0].level;
