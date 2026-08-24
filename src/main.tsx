@@ -10,15 +10,40 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "katex/dist/katex.min.css";
 import "./index.css";
 
-// Lazy load route components for better code splitting
-const Landing = lazy(() => import("./pages/Landing.tsx"));
-const AuthPage = lazy(() => import("./pages/Auth.tsx"));
-const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
-const TodayView = lazy(() => import("./components/app/TodayView.tsx"));
-const PlansView = lazy(() => import("./components/app/PlansView.tsx"));
-const PlanDetailView = lazy(() => import("./components/app/PlanDetailView.tsx"));
-const PodView = lazy(() => import("./components/app/PodView.tsx"));
-const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+// Lazy load route components for better code splitting.
+// Each import retries ONCE via a full page reload if the chunk fetch fails —
+// a fresh deploy replaces hashed chunk names, so an open tab's cached
+// index.html can reference chunks that no longer exist. Reloading picks up
+// the new index.html; the sessionStorage guard prevents reload loops.
+const CHUNK_RELOAD_KEY = "cadence:chunk-reload";
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+function lazyRoute(load: () => Promise<{ default: React.ComponentType<any> }>) {
+  return lazy(() =>
+    load()
+      .then((mod) => {
+        sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+        return mod;
+      })
+      .catch((err) => {
+        if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+          window.location.reload();
+        }
+        throw err;
+      }),
+  );
+}
+
+const Landing = lazyRoute(() => import("./pages/Landing.tsx"));
+const AuthPage = lazyRoute(() => import("./pages/Auth.tsx"));
+const Dashboard = lazyRoute(() => import("./pages/Dashboard.tsx"));
+const TodayView = lazyRoute(() => import("./components/app/TodayView.tsx"));
+const PlansView = lazyRoute(() => import("./components/app/PlansView.tsx"));
+const PlanDetailView = lazyRoute(() =>
+  import("./components/app/PlanDetailView.tsx"),
+);
+const PodView = lazyRoute(() => import("./components/app/PodView.tsx"));
+const NotFound = lazyRoute(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
