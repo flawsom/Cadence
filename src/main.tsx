@@ -1,5 +1,6 @@
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
+import { CursorTrails } from "@/components/CursorTrails";
 import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
@@ -141,6 +142,9 @@ function RouteSyncer() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
+      {/* Cursor trails on EVERY route — mounted outside the router so it
+          persists across navigation without ever re-initializing. */}
+      <CursorTrails className="pointer-events-none fixed inset-0 z-30" />
       <ToolbarErrorBoundary>
         <VlyToolbar />
       </ToolbarErrorBoundary>
