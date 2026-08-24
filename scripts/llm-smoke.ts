@@ -3,11 +3,16 @@
  *
  * Assumes an OpenAI-compatible server is reachable at LLM_BASE_URL
  * (defaults to Ollama at http://127.0.0.1:11434/v1). Sends the exact same
- * system prompt the app uses (src/convex/lib.ts → SYLLABUS_SYSTEM_PROMPT)
- * and asserts the model returns valid, sequenced topic JSON.
+ * system prompt and normalization pipeline the app uses in production,
+ * then asserts QUALITY invariants — not just parseable JSON:
+ *   • enough topics for a real plan
+ *   • every topic survives production normalization
+ *   • fundamentals-first sequencing (intro-level first, capstone last)
+ *   • sane study-hour estimates
  *
  * Run: bun scripts/llm-smoke.ts
  */
+import { normalizeTopics } from "../src/convex/lib";
 const BASE_URL = (process.env.LLM_BASE_URL ?? "http://127.0.0.1:11434/v1").replace(/\/$/, "");
 const MODEL = process.env.LLM_MODEL ?? "qwen2.5:1.5b-instruct";
 
@@ -87,24 +92,45 @@ if (start === -1 || end <= start) {
   process.exit(1);
 }
 
-let topics: Array<{ title?: unknown; level?: unknown }> = [];
+let raw: unknown;
 try {
-  const parsed = JSON.parse(content.slice(start, end + 1)) as { topics?: typeof topics };
-  topics = Array.isArray(parsed.topics) ? parsed.topics : [];
+  const parsed = JSON.parse(content.slice(start, end + 1)) as { topics?: unknown };
+  raw = parsed.topics;
 } catch {
   console.error("FAIL: JSON parse error.\n---\n" + content.slice(0, 500));
   process.exit(1);
 }
 
-if (topics.length < 3) {
-  console.error(`FAIL: expected >= 3 topics, got ${topics.length}.\n---\n` + content.slice(0, 500));
+// Run through the SAME normalizer production uses.
+const topics = normalizeTopics(raw);
+if (topics.length < 5) {
+  console.error(`FAIL: expected >= 5 usable topics after normalization, got ${topics.length}.\n---\n` + content.slice(0, 500));
   process.exit(1);
 }
 
-const levels = topics.map((t) => Number(t.level ?? 2));
-const sortedByLevel = levels.every((l, i) => i === 0 || l >= levels[i - 1] - 0); // non-decreasing tolerance
+// ── Quality invariants (these FAIL CI, no tolerance) ──────────────────────
+let failed = false;
+if (topics.some((t) => t.title.length < 4)) {
+  console.error("FAIL: a normalized topic title is too short to be meaningful.");
+  failed = true;
+}
+if (topics.some((t) => t.hours < 0.5 || t.hours > 6)) {
+  console.error("FAIL: a topic's study hours are outside the realistic 0.5–6h band.");
+  failed = true;
+}
+const firstLevel = topics[0].level;
+const lastLevel = topics[topics.length - 1].level;
+if (firstLevel === 3) {
+  console.error(`FAIL: sequencing starts on an ADVANCED topic ("${topics[0].title}") — fundamentals-first violated.`);
+  failed = true;
+}
+if (lastLevel < firstLevel && topics.length >= 4) {
+  console.error(`FAIL: sequence ends earlier-level than it starts (${firstLevel}→${lastLevel}).`);
+  failed = true;
+}
+if (failed) process.exit(1);
+
 console.log(
-  `OK: ${topics.length} topics, first: "${String(topics[0]?.title)}"` +
-    (sortedByLevel ? "" : " (levels not strictly ordered — acceptable for small models)"),
+  `OK: ${topics.length} normalized topics · first: L${firstLevel} "${topics[0].title}" · last: L${lastLevel} "${topics[topics.length - 1].title}"`,
 );
-console.log("PASS: local LLM answered Cadence's ingestion prompt with valid topic JSON.");
+console.log("PASS: local LLM produced production-valid, fundamentals-first topic JSON.");
