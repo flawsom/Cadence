@@ -13,10 +13,12 @@ import type * as auth from "../auth.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as http from "../http.js";
 import type * as lib from "../lib.js";
+import type * as mailer from "../mailer.js";
 import type * as plans from "../plans.js";
 import type * as pods from "../pods.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
+import type * as welcome from "../welcome.js";
 
 import type {
   ApiFromModules,
@@ -30,10 +32,12 @@ declare const fullApi: ApiFromModules<{
   "auth/emailOtp": typeof auth_emailOtp;
   http: typeof http;
   lib: typeof lib;
+  mailer: typeof mailer;
   plans: typeof plans;
   pods: typeof pods;
   tasks: typeof tasks;
   users: typeof users;
+  welcome: typeof welcome;
 }>;
 
 /**

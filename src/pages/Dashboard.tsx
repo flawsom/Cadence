@@ -22,12 +22,21 @@ export default function Dashboard() {
   const stats = useQuery(api.tasks.getStats, { todayKey });
   const syncRollover = useMutation(api.tasks.syncRollover);
 
+  const maybeSendWelcome = useMutation(api.welcome.maybeSendWelcome);
+
   // Carry unfinished work forward the moment the app opens — visibly,
   // once per day per session (TodayView surfaces the toast).
   useEffect(() => {
     syncRollover({ todayKey }).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayKey]);
+
+  // First visit of a new account triggers the Resend welcome template.
+  // The mutation is idempotent (welcomeSentAt flag) — safe to call always.
+  useEffect(() => {
+    maybeSendWelcome().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
