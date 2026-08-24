@@ -238,8 +238,12 @@ export const podBoards = query({
       .collect();
 
     // Client-local day window ending at the caller's today.
+    // Malformed keys fall back to UTC today rather than crashing the query.
+    const safeTodayKey = /^\d{4}-\d{2}-\d{2}$/.test(args.todayKey)
+      ? args.todayKey
+      : new Date().toISOString().slice(0, 10);
     const windowDays = Math.min(Math.max(args.windowDays ?? 14, 7), 30);
-    const end = new Date(`${args.todayKey}T00:00:00Z`).getTime();
+    const end = new Date(`${safeTodayKey}T00:00:00Z`).getTime();
     const dayKeys: string[] = [];
     for (let i = windowDays - 1; i >= 0; i--) {
       dayKeys.push(new Date(end - i * 86_400_000).toISOString().slice(0, 10));
@@ -262,7 +266,7 @@ export const podBoards = query({
           .withIndex("by_plan", (q) => q.eq("planId", p._id))
           .collect();
         const done = tasks.filter((t) => t.status === "done");
-        const today = tasks.filter((t) => t.dayKey === args.todayKey);
+        const today = tasks.filter((t) => t.dayKey === safeTodayKey);
         plans.push({
           planId: p._id,
           title: p.title,

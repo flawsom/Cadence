@@ -1,5 +1,4 @@
 import { fmtHours, prettyDate } from "@/lib/planning";
-import { useId } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -42,7 +41,13 @@ export function PodCompareChart({
   dayKeys: string[];
   members: BoardMember[];
 }) {
-  const gradientBase = useId().replace(/:/g, "");
+  // Two members can share a display name — uniquify so their lines never merge.
+  const nameCounts = new Map<string, number>();
+  const seriesKeys = members.map((m) => {
+    const n = nameCounts.get(m.name) ?? 0;
+    nameCounts.set(m.name, n + 1);
+    return n === 0 ? m.name : `${m.name} (${n + 1})`;
+  });
 
   const data = dayKeys.map((dk, i) => {
     const row: Record<string, string | number> = {
@@ -56,9 +61,9 @@ export function PodCompareChart({
               timeZone: "UTC",
             }),
     };
-    for (const m of members) {
-      row[m.name] = m.series[i]?.hours ?? 0;
-    }
+    members.forEach((m, mi) => {
+      row[seriesKeys[mi]] = m.series[i]?.hours ?? 0;
+    });
     return row;
   });
 
@@ -104,9 +109,10 @@ export function PodCompareChart({
           />
           {members.map((m, i) => (
             <Line
-              key={m.name}
+              key={seriesKeys[i]}
               type="monotone"
-              dataKey={m.name}
+              dataKey={seriesKeys[i]}
+              name={m.name}
               stroke={memberColor(i, m.isYou)}
               strokeWidth={m.isYou ? 2.75 : 2}
               strokeDasharray={m.isYou ? undefined : "1 0"}
