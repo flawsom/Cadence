@@ -96,7 +96,9 @@ export function NewPlanDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-lg">
+      {/* Cap the dialog to the viewport so a long paste can never push the
+          submit buttons off-screen — the body scrolls inside instead. */}
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Start a new plan</DialogTitle>
           <DialogDescription>
@@ -115,6 +117,7 @@ export function NewPlanDialog({
               rows={7}
               required
               minLength={2}
+              className="max-h-56 overflow-y-auto resize-y"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
