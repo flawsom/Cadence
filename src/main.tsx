@@ -13,6 +13,10 @@ import "./index.css";
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const TodayView = lazy(() => import("./components/app/TodayView.tsx"));
+const PlansView = lazy(() => import("./components/app/PlansView.tsx"));
+const PlanDetailView = lazy(() => import("./components/app/PlanDetailView.tsx"));
+const PodView = lazy(() => import("./components/app/PodView.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -131,7 +135,12 @@ createRoot(document.getElementById("root")!).render(
                     <Dashboard />
                   </RequireAuth>
                 }
-              />
+              >
+                <Route index element={<TodayView />} />
+                <Route path="plans" element={<PlansView />} />
+                <Route path="plans/:planId" element={<PlanDetailView />} />
+                <Route path="pod" element={<PodView />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

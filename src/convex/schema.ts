@@ -32,12 +32,81 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // ── Cadence ────────────────────────────────────────────────────────────
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // A learning track: one syllabus turned into a day-by-day schedule.
+    plans: defineTable({
+      userId: v.id("users"),
+      title: v.string(),
+      sourceExcerpt: v.string(),
+      sourceKind: v.union(v.literal("ai"), v.literal("heuristic")),
+      hoursPerDay: v.number(),
+      targetDays: v.number(),
+      scheduledDays: v.number(),
+      status: v.union(v.literal("active"), v.literal("archived")),
+      accent: v.number(),
+      createdAt: v.number(),
+    }).index("by_user", ["userId"]),
+
+    // Sequenced topics for a plan, fundamentals-first.
+    topics: defineTable({
+      planId: v.id("plans"),
+      idx: v.number(),
+      title: v.string(),
+      hours: v.number(),
+      level: v.number(), // 1 foundations · 2 core · 3 advanced
+    }).index("by_plan", ["planId"]),
+
+    // One schedulable block of work: a learning chunk or a retention review.
+    tasks: defineTable({
+      userId: v.id("users"),
+      planId: v.id("plans"),
+      topicId: v.optional(v.id("topics")),
+      title: v.string(),
+      kind: v.union(v.literal("learn"), v.literal("review")),
+      hours: v.number(),
+      dayKey: v.string(), // YYYY-MM-DD (client-local)
+      dayIndex: v.number(),
+      order: v.number(),
+      status: v.union(v.literal("open"), v.literal("done")),
+      doneAt: v.optional(v.number()),
+      doneDayKey: v.optional(v.string()),
+      carried: v.boolean(),
+      reviewStage: v.optional(v.number()),
+      reviewSpawned: v.boolean(),
+      createdAt: v.number(),
+    })
+      .index("by_user_day", ["userId", "dayKey"])
+      .index("by_user", ["userId"])
+      .index("by_plan", ["planId"]),
+
+    // A small group studying alongside each other.
+    pods: defineTable({
+      name: v.string(),
+      code: v.string(),
+      ownerId: v.id("users"),
+      createdAt: v.number(),
+    }).index("by_code", ["code"]),
+
+    podMembers: defineTable({
+      podId: v.id("pods"),
+      userId: v.id("users"),
+      joinedAt: v.number(),
+    })
+      .index("by_pod", ["podId"])
+      .index("by_user", ["userId"]),
+
+    // A daily check-in note inside a pod (one per member per day).
+    checkins: defineTable({
+      podId: v.id("pods"),
+      userId: v.id("users"),
+      dayKey: v.string(),
+      mood: v.optional(
+        v.union(v.literal("great"), v.literal("okay"), v.literal("rough")),
+      ),
+      note: v.string(),
+      createdAt: v.number(),
+    }).index("by_pod", ["podId"]),
   },
   {
     schemaValidation: false,
