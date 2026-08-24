@@ -16,7 +16,7 @@ import {
 
 import { useAuth } from "@/hooks/use-auth";
 import { CadenceWordmark } from "@/components/CadenceMark";
-import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
+import { ArrowRight, Loader2, Mail, Timer, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -46,6 +46,15 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const [resent, setResent] = useState(false);
+
+  // 1-second countdown for the OTP resend lockout.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -60,6 +69,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       const formData = new FormData(event.currentTarget);
       await signIn("email-otp", formData);
       setStep({ email: formData.get("email") as string });
+      setCooldown(60);
+      setResent(false);
       setIsLoading(false);
     } catch (error) {
       console.error("Email sign-in error:", error);
@@ -91,6 +102,36 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
       setOtp("");
     }
+  };
+
+  const handleResend = async () => {
+    if (typeof step === "string" || cooldown > 0 || isLoading) return;
+    setIsLoading(true);
+    setError(null);
+    setResent(false);
+    try {
+      const formData = new FormData();
+      formData.set("email", step.email);
+      await signIn("email-otp", formData);
+      setCooldown(60);
+      setResent(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Couldn't resend the code. Try again in a moment.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const backToEmail = () => {
+    setStep("signIn");
+    setOtp("");
+    setCooldown(0);
+    setResent(false);
+    setError(null);
   };
 
   const handleGuestLogin = async () => {
@@ -236,15 +277,28 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground text-center mt-4">
-                    Didn't receive a code?{" "}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto"
-                      onClick={() => setStep("signIn")}
-                    >
-                      Try again
-                    </Button>
+                    Didn&apos;t receive a code?{" "}
+                    {cooldown > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground/70">
+                        <Timer className="h-3.5 w-3.5" />
+                        Resend in {cooldown}s
+                      </span>
+                    ) : (
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto"
+                        onClick={handleResend}
+                        disabled={isLoading}
+                      >
+                        Resend code
+                      </Button>
+                    )}
                   </p>
+                  {resent && (
+                    <p className="text-xs text-center text-emerald-600">
+                      A fresh code is on its way to {step.email}.
+                    </p>
+                  )}
                 </CardContent>
                 <CardFooter className="flex-col gap-2">
                   <Button
@@ -267,7 +321,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => setStep("signIn")}
+                    onClick={backToEmail}
                     disabled={isLoading}
                     className="w-full"
                   >
