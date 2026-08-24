@@ -270,3 +270,55 @@ When using convex, make sure:
 - This includes importing generated files like `@/convex/_generated/server`, `@/convex/_generated/api`
 - Remember to import functions like useQuery, useMutation, useAction, etc. from `convex/react`
 - NEVER have return type validators.
+
+## Running the AI on your own machine (no API keys)
+
+Cadence's syllabus ingestion talks to any **OpenAI-compatible endpoint**, so you
+can run the model entirely locally with [Ollama](https://ollama.com):
+
+```bash
+# 1. Install Ollama, then pull a small, JSON-reliable model:
+ollama pull qwen2.5:1.5b-instruct
+
+# 2. Serve it (exposes an OpenAI-compatible API at http://127.0.0.1:11434/v1):
+ollama serve
+```
+
+That's it — no environment variables needed, those are the defaults. To point
+Cadence at something else (llama.cpp server, LM Studio, vLLM, a gateway), set:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `LLM_BASE_URL` | `http://127.0.0.1:11434/v1` | OpenAI-compatible base URL |
+| `LLM_MODEL` | `qwen2.5:1.5b-instruct` | Model name |
+| `LLM_API_KEY` | _(unset)_ | Optional Bearer token |
+
+If the local model is unreachable or returns unusable output, Cadence silently
+falls back to its deterministic heuristic parser — the app never blocks on AI.
+The same smoke test CI runs is available locally:
+
+```bash
+bun scripts/llm-smoke.ts
+```
+
+## Continuous integration & GitHub Pages
+
+`.github/workflows/ci.yml` runs three jobs on every push/PR:
+
+1. **Typecheck & build** — regenerates Convex types (`bunx convex codegen`, no
+   deployment auth required), typechecks, and produces the Pages build.
+2. **Local LLM smoke test** — installs Ollama *on the runner*, pulls
+   `qwen2.5:1.5b-instruct`, serves it, and verifies it answers Cadence's real
+   ingestion prompt with valid topic JSON. No paid APIs anywhere.
+3. **Deploy to GitHub Pages** — gated on both jobs passing; only runs on pushes
+   to `main`.
+
+One-time setup after connecting this repo to GitHub:
+
+- **Settings → Pages → Source: GitHub Actions**.
+- Add a repository **variable** `VITE_CONVEX_URL` (your Convex deployment URL,
+  e.g. `https://<deployment>.convex.cloud`) so the deployed site talks to a real
+  backend. Without it the build still passes but uses a placeholder.
+- On the Convex side, set `CONVEX_SITE_URL` to your Pages URL
+  (`https://flawsom.github.io/Cadence`) so auth redirects work.
+

@@ -3,6 +3,32 @@
 
 export type ParsedTopic = { title: string; hours: number; level: number };
 
+/**
+ * System prompt for AI-assisted ingestion. Works with any OpenAI-compatible
+ * endpoint — including a fully local Ollama / llama.cpp / LM Studio server.
+ */
+export const SYLLABUS_SYSTEM_PROMPT =
+  "You are Cadence's curriculum planner. From the user's syllabus text or subject description, produce a JSON object: " +
+  '{"title": string (short plan name), "topics": [{"title": string, "hours": number, "level": number}]}. ' +
+  "Order topics fundamentals-first and build toward advanced material (never document order for its own sake). " +
+  "hours is focused study time per topic, between 0.5 and 6, realistic for a diligent human. " +
+  "level is 1 (foundations), 2 (core), or 3 (advanced). Produce between 5 and 24 topics. Return only JSON.";
+
+/** Normalizes raw model output into safe, bounded ParsedTopics. */
+export function normalizeTopics(input: unknown): ParsedTopic[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((raw) => {
+      const t = raw as Record<string, unknown>;
+      const title = String(t?.title ?? "").trim().slice(0, 120);
+      const hours = Math.min(8, Math.max(0.5, Math.round(Number(t?.hours ?? 2) * 4) / 4));
+      const level = Math.min(3, Math.max(1, Math.round(Number(t?.level ?? 2))));
+      return { title, hours, level };
+    })
+    .filter((t) => t.title.length > 1)
+    .slice(0, 40);
+}
+
 const DAY_MS = 86_400_000;
 
 export function dayKeyToUtcMs(key: string): number {

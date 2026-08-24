@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import { todayISO } from "@/lib/planning";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { Loader2, Sparkles } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
@@ -44,6 +44,7 @@ export function NewPlanDialog({
   const [targetDays, setTargetDays] = React.useState("30");
   const [pending, setPending] = React.useState(false);
 
+  const ingestSyllabus = useAction(api.ai.ingestSyllabus);
   const createPlan = useMutation(api.plans.createPlan);
   const navigate = useNavigate();
 
@@ -52,10 +53,21 @@ export function NewPlanDialog({
     if (rawInput.trim().length < 2) return;
     setPending(true);
     try {
-      // Cadence's deterministic pacing engine does the sequencing —
-      // fundamentals first, sized to the hours you actually have.
+      // Try a local LLM first (see src/convex/ai.ts); the deterministic
+      // pacing engine is an always-works fallback, never the other way around.
+      let parsed: { title?: string; topics?: { title: string; hours: number; level: number }[] } = {};
+      let usedAI = false;
+      try {
+        parsed = await ingestSyllabus({ rawInput });
+        usedAI = (parsed.topics?.length ?? 0) >= 3;
+      } catch {
+        parsed = {};
+      }
+
       const result = await createPlan({
         rawInput,
+        title: usedAI ? parsed.title || undefined : undefined,
+        topics: usedAI ? parsed.topics : undefined,
         hoursPerDay: Number(hoursPerDay),
         targetDays: Math.max(1, Math.min(366, Number(targetDays) || 30)),
         startDayKey: todayISO(),
@@ -64,7 +76,9 @@ export function NewPlanDialog({
       toast.success(
         `Planned ${result.scheduledDays} day${result.scheduledDays === 1 ? "" : "s"} of study`,
         {
-          description: "Sequenced fundamentals-first by the pacing engine.",
+          description: usedAI
+            ? "Sequenced fundamentals-first by your local LLM."
+            : "Sequenced fundamentals-first by the pacing engine.",
         },
       );
       setRawInput("");

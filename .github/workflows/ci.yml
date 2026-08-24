@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Repo pages live under /<repo name>/ — keep in sync with the repo name.
+  PAGES_BASE_PATH: /Cadence/
+
+jobs:
+  # ── Typecheck + production build ────────────────────────────────────────────
+  checks:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Regenerate Convex types (_generated is gitignored)
+        run: bunx convex codegen
+
+      - name: Typecheck
+        run: bunx tsc -b --noEmit
+
+      - name: Build for Pages (SPA fallback + subpath assets)
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL != '' && vars.VITE_CONVEX_URL || 'https://placeholder.convex.cloud' }}
+          VITE_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
+        run: |
+          bun run build
+          cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  # ── Local LLM: proves ingestion works with zero paid APIs ──────────────────
+  local-llm:
+    name: Local LLM (Ollama) smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          ollama serve > /tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:11434/api/tags > /dev/null && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:11434/api/tags > /dev/null
+
+      - name: Pull model (qwen2.5 1.5B — small, fast, JSON-reliable)
+        run: ollama pull qwen2.5:1.5b-instruct
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run ingestion smoke test against the local model
+        timeout-minutes: 10
+        run: bun scripts/llm-smoke.ts
+
+  # ── GitHub Pages deploy — only after checks AND the LLM job pass ───────────
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [checks, local-llm]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
