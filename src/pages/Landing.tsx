@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { HeroCanvas } from "@/components/HeroCanvas";
 import { CadenceMark, CadenceWordmark } from "@/components/CadenceMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,9 @@ function Nav({ startHref, startLabel }: { startHref: string; startLabel: string 
 function Hero({ startHref, startLabel }: { startHref: string; startLabel: string }) {
   return (
     <section className="texture-dots relative overflow-hidden">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-24">
+      <HeroCanvas className="pointer-events-none absolute inset-0" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/70 via-background/20 to-background" />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-24">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
