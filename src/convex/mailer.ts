@@ -33,7 +33,7 @@ function authHeaders(): Record<string, string> {
 }
 
 function fromAddress(): string {
-  return process.env.MAIL_FROM ?? "Cadence <onboarding@resend.dev>";
+  return process.env.MAIL_FROM ?? "Cadence <Siba@unifies.codes>";
 }
 
 /** Resolve the template alias to its current published id + metadata. */
