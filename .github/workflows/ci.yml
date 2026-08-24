@@ -37,6 +37,11 @@ jobs:
       - name: Typecheck
         run: bunx tsc -b --noEmit
 
+      # Ingestion quality gates: real university syllabus fixtures with
+      # hard invariants (hour budgets, meta rejection, fundamentals-first).
+      - name: Ingestion quality gates
+        run: bun test scripts/ingest-quality.test.ts
+
       - name: Build for Pages (SPA fallback + subpath assets)
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL || env.DEFAULT_VITE_CONVEX_URL }}

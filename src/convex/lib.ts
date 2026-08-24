@@ -78,11 +78,11 @@ const roundQuarter = (n: number) => Math.round(n * 4) / 4;
 
 /** Everything after one of these markers is course meta, never studyable content. */
 const SECTION_STOP_RE =
-  /^(learning\s+outcomes?|course\s+outcomes?|text\s*books?|references?|recommended\s+reading|grading|assessment\s+scheme|formative\s+assessments?)\b/i;
+  /^(learning\s+outcomes?|course\s+outcomes?|text\s*books?|references?|recommended\s+reading|grading|assessment\s+scheme)\b/i;
 
 /** Structural noise even before a stop marker. */
 const NOISE_LINE_RE =
-  /^co\d+\b|^\d+[.)]\s|https?:\/\/|\d+\s+quizzes?\b|peer-review|^sub-?topics?\s*$|isbn/i;
+  /^co\d+\b|^\d+[.)]\s|https?:\/\/|\d+\s+quizzes?\b|peer-review|^sub-?topics?\s*$|isbn|^formative\s+assessments?\s*:?$|^assessments?\s*:$/i;
 
 /** Course-code title like "PCAR2004 CLOUD COMPUTING FOUNDATIONS (3-0-0)". */
 const COURSE_CODE_RE = /^[A-Z]{2,4}\d{3,4}\s+\S/;
@@ -109,7 +109,12 @@ const DEBRIS_LEAD_RE =
 function isProse(line: string): boolean {
   if (PROSE_RE.test(line)) return true;
   const terminators = (line.match(/[.!?]/g) ?? []).length;
-  return terminators >= 4 || line.length > 260;
+  // Long lines are NOT automatically prose: university modules pack dozens of
+  // comma-separated sub-topics into one 700+ character line. Only narrative
+  // keywords, sentence-dense text, or a LONG line without list structure is
+  // discarded.
+  const listy = line.split(",").length >= 6;
+  return terminators >= 5 || (line.length > 500 && !listy);
 }
 
 function stripHoursTag(line: string): { text: string; hours: number | null } {
@@ -353,6 +358,35 @@ export function heuristicParse(raw: string): {
     hours: hours ?? hoursFor(t),
     level: levelFor(t, total > 1 ? i / (total - 1) : 0),
   }));
+
+  // Ultra-granular syllabi (some list 100+ sub-points) become task spam.
+  // Merge the most trivial adjacent pairs until the plan is human-sized;
+  // content is preserved — two small steps become one slightly bigger one.
+  const MAX_TOPICS = 30;
+  const merged = [...topics];
+  while (merged.length > MAX_TOPICS) {
+    let best = 0;
+    let bestCost = Infinity;
+    for (let i = 0; i < merged.length - 1; i++) {
+      const cost =
+        merged[i].title.length +
+        merged[i + 1].title.length +
+        Math.abs(merged[i].hours - merged[i + 1].hours) * 10 +
+        Math.abs(merged[i].level - merged[i + 1].level) * 20;
+      if (cost < bestCost) {
+        bestCost = cost;
+        best = i;
+      }
+    }
+    const a = merged[best];
+    const b = merged[best + 1];
+    merged.splice(best, 2, {
+      title: `${a.title} & ${b.title}`.slice(0, 120),
+      hours: roundQuarter(a.hours + b.hours),
+      level: Math.min(a.level, b.level),
+    });
+  }
+  return { title, topics: merged };
 
   // Title priority: course-code/header line > first clean topic > raw first line.
   if (!title) {
