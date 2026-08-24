@@ -96,8 +96,9 @@ export function NewPlanDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      {/* Cap the dialog to the viewport so a long paste can never push the
-          submit buttons off-screen — the body scrolls inside instead. */}
+      {/* Fix: cap the dialog to the viewport so a long syllabus paste can
+          never push the submit buttons off-screen — the body scrolls inside
+          instead. (Textarea is also capped at max-h-56 with its own scroll.) */}
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Start a new plan</DialogTitle>
