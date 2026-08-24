@@ -1,3 +1,4 @@
+import { MathText } from "@/components/MathText";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -55,14 +56,13 @@ export function TaskRow({
               aria-hidden
             />
           )}
-          <span
+          <MathText
             className={cn(
               "text-sm font-medium leading-snug",
               done && "text-muted-foreground line-through decoration-primary/40",
             )}
-          >
-            {task.title}
-          </span>
+            text={task.title}
+          />
           {task.kind === "review" && (
             <Badge variant="outline" className="gap-1 border-chart-2/50 text-[10px] uppercase tracking-wide text-chart-2">
               <Repeat2 className="size-3" /> Review

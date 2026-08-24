@@ -12,7 +12,8 @@ export const SYLLABUS_SYSTEM_PROMPT =
   '{"title": string (short plan name), "topics": [{"title": string, "hours": number, "level": number}]}. ' +
   "Order topics fundamentals-first and build toward advanced material (never document order for its own sake). " +
   "hours is focused study time per topic, between 0.5 and 6, realistic for a diligent human. " +
-  "level is 1 (foundations), 2 (core), or 3 (advanced). Produce between 5 and 24 topics. Return only JSON.";
+  "level is 1 (foundations), 2 (core), or 3 (advanced). Produce between 5 and 24 topics. " +
+  'When a topic involves mathematical notation, write it in LaTeX wrapped in $ signs — for example "Dirac delta function $\\\\delta(t)$", "$2\\\\pi$ periodic functions", "solve $\\\\nabla^2 u = 0$". Return only JSON.';
 
 /** Normalizes raw model output into safe, bounded ParsedTopics. */
 export function normalizeTopics(input: unknown): ParsedTopic[] {
@@ -129,6 +130,11 @@ function stripHoursTag(line: string): { text: string; hours: number | null } {
 function basicClean(line: string): string {
   return line
     .replace(/^[\s•·▪◦‣⁃\u2013\u2014*-]+\s*/, "")
+    // Canonicalize typographic/math variants for consistent rendering.
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\u2212/g, "-")
+    .replace(/\u{1D70B}/gu, "π")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -162,6 +168,24 @@ function extractTopicsFromLine(line: string): string[] {
           : [s];
     } else {
       pieces = [s];
+    }
+    // Salvage pass: a sentence whose ALL-OR-NOTHING list check failed may
+    // still contain mostly-clean fragments ("…lines (method of least
+    // squares), correlation coefficient with basic properties."). Split on
+    // commas and keep fragments that individually look like real topics;
+    // require each to be substantial (≥3 words) so "part 2" debris can't
+    // sneak through on a single-comma split.
+    if (pieces.length === 1 && s.includes(",")) {
+      const salvaged = s
+        .split(",")
+        .map((frag) => frag.trim())
+        .filter((frag) => {
+          const fw = frag.split(/\s+/).length;
+          return (
+            frag.length >= 3 && fw >= 3 && fw <= 9 && !DEBRIS_LEAD_RE.test(frag)
+          );
+        });
+      if (salvaged.length >= 2) pieces = salvaged;
     }
     for (const piece of pieces) {
       let p = piece.replace(/[.\s]+$/, "").trim();
@@ -205,11 +229,19 @@ function makeTitle(firstLine: string): string {
     t.length > 8 && t === t.toUpperCase() && /[A-Z]{3}/.test(t)
       ? t
           .split(/\s+/)
-          .map((w) =>
-            /\d/.test(w)
-              ? w
-              : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
-          )
+          .map((w) => {
+            if (/\d/.test(w)) return w;
+            // Hyphenated tokens capitalize per segment; Roman numerals
+            // stay capital: Mathematics-III, Module-IV, Part-VI.
+            return w
+              .split("-")
+              .map((seg) =>
+                /^[ivxlc]+$/i.test(seg)
+                  ? seg.toUpperCase()
+                  : seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase(),
+              )
+              .join("-");
+          })
           .join(" ")
       : t;
   return (titled.length > 60 ? `${titled.slice(0, 57)}…` : titled) || "Untitled plan";
@@ -305,17 +337,19 @@ export function heuristicParse(raw: string): {
     }
   }
 
-  // Dedupe (case-insensitive) and drop fragments already contained in a
-  // longer sibling ("Operators" inside "Different types of operators").
+  // Dedupe (case-insensitive); drop fragments that merely PREFIX a longer
+  // sibling ("Operators" before "Operators and type casting"). Substring
+  // matching is NOT enough: "correlation coefficient with basic properties"
+  // legitimately coexists with an earlier "Basic properties".
   const seen = new Set<string>();
   const collected: { title: string; hours: number | null }[] = [];
   for (const item of flat) {
     const k = item.title.toLowerCase();
     if (seen.has(k) || k === title.toLowerCase()) continue;
-    const contained = collected.some(
-      (c) =>
-        c.title.toLowerCase().includes(k) || k.includes(c.title.toLowerCase()),
-    );
+    const contained = collected.some((c) => {
+      const ck = c.title.toLowerCase();
+      return ck.startsWith(k) || k.startsWith(ck);
+    });
     if (contained) continue;
     seen.add(k);
     collected.push(item);

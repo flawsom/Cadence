@@ -140,6 +140,50 @@ describe("CSPC2003 Object Oriented Programming", () => {
   });
 });
 
+describe("HSBS2001 Mathematics-III", () => {
+  const { title, topics } = heuristicParse(fixture("hsbs2001-maths.txt"));
+
+  test("extracts the official course title with roman numeral intact", () => {
+    expect(title).toMatch(/Mathematics-III/i);
+  });
+
+  test("all five module themes represented", () => {
+    const joined = topics.map((t) => t.title).join(" | ").toLowerCase();
+    for (const expected of [
+      "laplace",
+      "fourier",
+      "separation of variables",
+      "poisson",
+      "normal distribution",
+      "maximum likelihood",
+      "correlation coefficient",
+    ]) {
+      expect(joined).toContain(expected);
+    }
+  });
+
+  test("module hour budgets distributed (5 × 8 hours ≈ 40 total)", () => {
+    const total = topics.reduce((s, t) => s + t.hours, 0);
+    expect(total).toBeGreaterThanOrEqual(30);
+    expect(total).toBeLessThanOrEqual(55);
+  });
+
+  test("no textbook authors or reference leakage", () => {
+    const joined = topics.map((t) => t.title).join(" | ");
+    for (const banned of ["Kreyszig", "Willey", "Pearson", "McGraw", "Oxford"]) {
+      expect(joined).not.toContain(banned);
+    }
+  });
+
+  test("probability foundations precede specific distributions", () => {
+    const titles = topics.map((t) => t.title.toLowerCase());
+    const probBasics = titles.findIndex((t) => /axiomatic|basic properties|random variables/.test(t));
+    const distributions = titles.findIndex((t) => /binomial|poisson|normal/.test(t));
+    expect(probBasics).toBeGreaterThanOrEqual(0);
+    expect(distributions).toBeGreaterThan(probBasics);
+  });
+});
+
 describe("Bare intention (no syllabus at all)", () => {
   test('"I want to learn Rust" scaffolds around Rust', () => {
     const { title, topics } = heuristicParse("I want to learn Rust");

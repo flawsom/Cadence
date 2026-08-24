@@ -1,0 +1,27 @@
+HSBS2001 MATHEMATICS-III  (3-0-0)
+
+Module 1: Laplace Transforms (8 Hours)
+Laplace transforms, inverse transforms, linearity, shifting, transforms of derivatives and integrals, solution of ODEs, unit step function, Dirac's delta function, differentiation and integration of transforms, convolution, integral equations.
+
+Module 2: Fourier series & Applied PDE’s (8 Hours)
+Fourier series: Euler’s formula, 2𝜋 and arbitrary periodic functions, even and odd functions.
+Elementary PDE’s: Method of separation of variables (simple problems). One dimensional wave equation: solution by separation of variables, One dimensional heat equation: solution by Fourier series.
+
+Module 3: Basic Probability (8 Hours)
+Axiomatic definition of probability, Basic properties, conditioning and independence, Random variables (discrete and continuous), probability mass and density functions, cumulative distribution functions, moments of random variables, mean and variance.
+
+Module 4: Probability Distributions (8 Hours)
+Discrete Probability distributions: Binomial, Poisson and hyper-geometric distributions. Continuous Probability distributions: exponential, uniform and normal distributions.
+
+Module 5: Applied Statistics (8 Hours)
+Random sampling, estimation of parameters, maximum likelihood estimation, confidence intervals. Regression and correlation analysis: fitting of straight lines (method of lest squares), correlation coefficient with basic properties.
+
+Text Books:
+Advanced Engineering Mathematics by E. Kreyszig, John Willey & Sons Inc. 10th Edition.
+Ronald E. Walpole, Raymond H. Myers, Sharon L. Myers & Keying Ye, “Probability & Statistics for Engineers & Scientists", Eighth Edition, 2007, Pearson Education Inc., New Delhi.
+
+Reference Books:
+Ordinary and Partial Differential equations by J. Sinha Roy and S. Padhy, Kalyani Publishers.
+Higher Engineering Mathematics by B. V. Ramana, McGraw Hill Education.
+Engineering Mathematics by Pal and S. Bhunia, Oxford Publication.
+	Stochastic Processes, 2nd Edition by Roy D. Yates, Rutgers and David J. Goodman, John Wiley and Sons, INC.

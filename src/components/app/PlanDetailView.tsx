@@ -1,3 +1,4 @@
+import { MathText } from "@/components/MathText";
 import { TaskRow } from "@/components/app/TaskRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,7 +123,9 @@ export default function PlanDetailView() {
               <span className="w-5 shrink-0 text-right font-display text-sm font-semibold tabular-nums text-muted-foreground">
                 {i + 1}
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{topic.title}</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                <MathText text={topic.title} />
+              </span>
               <Badge variant="outline" className={`shrink-0 ${LEVELS[topic.level]?.className ?? ""}`}>
                 {LEVELS[topic.level]?.label}
               </Badge>
