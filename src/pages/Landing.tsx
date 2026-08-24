@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { HeroCanvas } from "@/components/HeroCanvas";
+import { CursorTrails } from "@/components/CursorTrails";
 import { CadenceMark, CadenceWordmark } from "@/components/CadenceMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <CursorTrails className="pointer-events-none fixed inset-0 z-30" />
       <Nav startHref={startHref} startLabel={startLabel} />
       <Hero startHref={startHref} startLabel={startLabel} />
       <HowItWorks />
