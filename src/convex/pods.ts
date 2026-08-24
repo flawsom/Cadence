@@ -209,6 +209,111 @@ export const leavePod = mutation({
   },
 });
 
+const round4 = (n: number) => Math.round(n * 4) / 4;
+
+/**
+ * The pod's shared boards: every member's subjects (live progress) plus a
+ * daily completed-hours series per member for side-by-side comparison.
+ * Everything here is a reactive Convex query — progress updates propagate
+ * to every pod member's window the moment a task is ticked.
+ */
+export const podBoards = query({
+  args: { todayKey: v.string(), windowDays: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const membership = await ctx.db
+      .query("podMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!membership) return null;
+
+    const pod = await ctx.db.get(membership.podId);
+    if (!pod) return null;
+
+    const memberRows = await ctx.db
+      .query("podMembers")
+      .withIndex("by_pod", (q) => q.eq("podId", pod._id))
+      .collect();
+
+    // Client-local day window ending at the caller's today.
+    const windowDays = Math.min(Math.max(args.windowDays ?? 14, 7), 30);
+    const end = new Date(`${args.todayKey}T00:00:00Z`).getTime();
+    const dayKeys: string[] = [];
+    for (let i = windowDays - 1; i >= 0; i--) {
+      dayKeys.push(new Date(end - i * 86_400_000).toISOString().slice(0, 10));
+    }
+
+    const members = [];
+    for (const row of [...memberRows].sort((a, b) => a.joinedAt - b.joinedAt)) {
+      const user = await ctx.db.get(row.userId);
+      if (!user) continue;
+
+      // Subjects: every active plan with its lifetime + today's progress.
+      const planRows = await ctx.db
+        .query("plans")
+        .withIndex("by_user", (q) => q.eq("userId", row.userId))
+        .collect();
+      const plans = [];
+      for (const p of planRows.filter((p) => p.status === "active")) {
+        const tasks = await ctx.db
+          .query("tasks")
+          .withIndex("by_plan", (q) => q.eq("planId", p._id))
+          .collect();
+        const done = tasks.filter((t) => t.status === "done");
+        const today = tasks.filter((t) => t.dayKey === args.todayKey);
+        plans.push({
+          planId: p._id,
+          title: p.title,
+          accent: p.accent,
+          totalTasks: tasks.length,
+          doneTasks: done.length,
+          plannedHours: round4(tasks.reduce((s, t) => s + t.hours, 0)),
+          doneHours: round4(done.reduce((s, t) => s + t.hours, 0)),
+          todayTotal: today.length,
+          todayDone: today.filter((t) => t.status === "done").length,
+        });
+      }
+
+      // Daily completed hours across the comparison window.
+      const series = [];
+      for (const dk of dayKeys) {
+        const dayTasks = await ctx.db
+          .query("tasks")
+          .withIndex("by_user_day", (q) =>
+            q.eq("userId", row.userId).eq("dayKey", dk),
+          )
+          .collect();
+        series.push({
+          dayKey: dk,
+          hours: round4(
+            dayTasks
+              .filter((t) => t.status === "done")
+              .reduce((s, t) => s + t.hours, 0),
+          ),
+        });
+      }
+
+      members.push({
+        userId: row.userId,
+        name: displayName(user, row.userId),
+        isYou: row.userId === userId,
+        plans,
+        series,
+      });
+    }
+
+    return {
+      _id: pod._id,
+      name: pod.name,
+      code: pod.code,
+      dayKeys,
+      members,
+    };
+  },
+});
+
 /** One check-in per person per day — posting again replaces the earlier note. */
 export const checkIn = mutation({
   args: { note: v.string(), todayKey: v.string() },

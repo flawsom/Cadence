@@ -15,11 +15,15 @@ import { api } from "@/convex/_generated/api";
 import { fmtHours, prettyDate, todayISO } from "@/lib/planning";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Check, Copy, MessageSquareHeart } from "lucide-react";
+import { Check, Copy, ListChecks, MessageSquareHeart, TrendingUp } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { PodCompareChart, memberColor } from "./PodCompareChart";
 
 type Pod = Exclude<FunctionReturnType<typeof api.pods.myPod>, null>;
+type Boards = Exclude<FunctionReturnType<typeof api.pods.podBoards>, null>;
+
+const ACCENTS = ["#E85A2A", "#2A9D8F", "#E9B44C", "#7B6CF0", "#DB2763"];
 
 
 export default function PodView() {
@@ -129,11 +133,19 @@ function NoPod() {
 
 function PodDashboard({ pod }: { pod: Pod }) {
   const leavePod = useMutation(api.pods.leavePod);
+  const todayKey = todayISO();
+  const boards = useQuery(api.pods.podBoards, { todayKey });
 
   return (
     <>
       <InviteBar name={pod.name} code={pod.code} />
       <CheckInComposer />
+      {boards !== undefined && boards !== null && (
+        <>
+          <SubjectBoards boards={boards} />
+          <CompareSection boards={boards} />
+        </>
+      )}
       <section className="flex flex-col gap-3">
         <h2 className="px-1 text-sm font-semibold">
           Today in {pod.name} · {pod.todayCheckins} checked in
@@ -205,6 +217,119 @@ function PodDashboard({ pod }: { pod: Pod }) {
         </div>
       </section>
     </>
+  );
+}
+
+/** Every member's subjects side by side, each with live to-do progress. */
+function SubjectBoards({ boards }: { boards: Boards }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 px-1 text-sm font-semibold">
+        <ListChecks className="size-4 text-primary" />
+        Subject boards
+      </h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        {boards.members.map((m) => (
+          <div
+            key={m.userId}
+            className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-card p-5"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <span
+                  className="inline-block size-2.5 rounded-full"
+                  style={{ background: memberColor(0, m.isYou) }}
+                />
+                {m.name}
+                {m.isYou && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                    You
+                  </span>
+                )}
+              </h3>
+              <span className="text-xs text-muted-foreground">
+                {m.plans.length === 0
+                  ? "No subjects yet"
+                  : `${m.plans.length} subject${m.plans.length === 1 ? "" : "s"}`}
+              </span>
+            </div>
+
+            {m.plans.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border/70 p-4 text-center text-xs text-muted-foreground">
+                {m.isYou
+                  ? "Create a plan and it shows up here for your pod to see."
+                  : "They haven't created a plan yet."}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {m.plans.map((p) => {
+                  const pct = p.totalTasks > 0 ? Math.round((p.doneTasks / p.totalTasks) * 100) : 0;
+                  const color = ACCENTS[p.accent % ACCENTS.length];
+                  return (
+                    <li key={p.planId} className="flex flex-col gap-1.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="truncate text-sm font-medium">{p.title}</span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {p.doneTasks}/{p.totalTasks} · {pct}%
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>{fmtHours(p.doneHours)} of {fmtHours(p.plannedHours)} done</span>
+                        {p.todayTotal > 0 && (
+                          <span className={p.todayDone === p.todayTotal ? "font-medium text-emerald-600" : "font-medium"}>
+                            Today {p.todayDone}/{p.todayTotal}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Live comparison chart of daily hours, one line per member. */
+function CompareSection({ boards }: { boards: Boards }) {
+  const totals = boards.members.map((m) => ({
+    name: m.name,
+    isYou: m.isYou,
+    total: m.series.reduce((s, d) => s + d.hours, 0),
+  }));
+
+  return (
+    <section className="rounded-3xl border border-border/70 bg-card p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <TrendingUp className="size-4 text-primary" />
+        Progress together · last {boards.dayKeys.length} days
+        </h2>
+        <span className="text-xs text-muted-foreground">Daily completed hours, side by side</span>
+      </div>
+      <PodCompareChart dayKeys={boards.dayKeys} members={boards.members} />
+      <div className="mt-2 flex flex-wrap gap-4 border-t pt-3 text-xs">
+        {totals.map((t, i) => (
+          <span key={t.name} className="flex items-center gap-1.5 text-muted-foreground">
+            <span
+              className="inline-block h-0.5 w-4 rounded-full"
+              style={{ background: memberColor(i, t.isYou) }}
+            />
+            <span className="font-medium text-foreground">{t.name}</span>
+            {fmtHours(Math.round(t.total * 4) / 4)} in the window
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 
