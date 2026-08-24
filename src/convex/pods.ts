@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -212,6 +213,102 @@ export const leavePod = mutation({
 const round4 = (n: number) => Math.round(n * 4) / 4;
 
 /**
+ * Shared board builder — the single source of truth for pod boards.
+ * Used by the authenticated `podBoards` query; testable in isolation.
+ */
+export async function buildBoards(
+  ctx: { db: QueryCtx["db"] },
+  pod: { _id: Id<"pods">; name: string; code: string },
+  viewerId: Id<"users">,
+  todayKey: string,
+  windowDays = 14,
+) {
+  const memberRows = await ctx.db
+    .query("podMembers")
+    .withIndex("by_pod", (q) => q.eq("podId", pod._id))
+    .collect();
+
+  // Client-local day window ending at the caller's today.
+  // Malformed keys fall back to UTC today rather than crashing the query.
+  const safeTodayKey = /^\d{4}-\d{2}-\d{2}$/.test(todayKey)
+    ? todayKey
+    : new Date().toISOString().slice(0, 10);
+  const days = Math.min(Math.max(windowDays, 7), 30);
+  const end = new Date(`${safeTodayKey}T00:00:00Z`).getTime();
+  const dayKeys: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    dayKeys.push(new Date(end - i * 86_400_000).toISOString().slice(0, 10));
+  }
+
+  const members = [];
+  for (const row of [...memberRows].sort((a, b) => a.joinedAt - b.joinedAt)) {
+    const user = await ctx.db.get(row.userId);
+    if (!user) continue;
+
+    // Subjects: every active plan with its lifetime + today's progress.
+    const planRows = await ctx.db
+      .query("plans")
+      .withIndex("by_user", (q) => q.eq("userId", row.userId))
+      .collect();
+    const plans = [];
+    for (const p of planRows.filter((p) => p.status === "active")) {
+      const tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_plan", (q) => q.eq("planId", p._id))
+        .collect();
+      const done = tasks.filter((t) => t.status === "done");
+      const today = tasks.filter((t) => t.dayKey === safeTodayKey);
+      plans.push({
+        planId: p._id,
+        title: p.title,
+        accent: p.accent,
+        totalTasks: tasks.length,
+        doneTasks: done.length,
+        plannedHours: round4(tasks.reduce((s, t) => s + t.hours, 0)),
+        doneHours: round4(done.reduce((s, t) => s + t.hours, 0)),
+        todayTotal: today.length,
+        todayDone: today.filter((t) => t.status === "done").length,
+      });
+    }
+
+    // Daily completed hours across the comparison window.
+    const series = [];
+    for (const dk of dayKeys) {
+      const dayTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_user_day", (q) =>
+          q.eq("userId", row.userId).eq("dayKey", dk),
+        )
+        .collect();
+      series.push({
+        dayKey: dk,
+        hours: round4(
+          dayTasks
+            .filter((t) => t.status === "done")
+            .reduce((s, t) => s + t.hours, 0),
+        ),
+      });
+    }
+
+    members.push({
+      userId: row.userId,
+      name: displayName(user, row.userId),
+      isYou: row.userId === viewerId,
+      plans,
+      series,
+    });
+  }
+
+  return {
+    _id: pod._id,
+    name: pod.name,
+    code: pod.code,
+    dayKeys,
+    members,
+  };
+}
+
+/**
  * The pod's shared boards: every member's subjects (live progress) plus a
  * daily completed-hours series per member for side-by-side comparison.
  * Everything here is a reactive Convex query — progress updates propagate
@@ -232,89 +329,7 @@ export const podBoards = query({
     const pod = await ctx.db.get(membership.podId);
     if (!pod) return null;
 
-    const memberRows = await ctx.db
-      .query("podMembers")
-      .withIndex("by_pod", (q) => q.eq("podId", pod._id))
-      .collect();
-
-    // Client-local day window ending at the caller's today.
-    // Malformed keys fall back to UTC today rather than crashing the query.
-    const safeTodayKey = /^\d{4}-\d{2}-\d{2}$/.test(args.todayKey)
-      ? args.todayKey
-      : new Date().toISOString().slice(0, 10);
-    const windowDays = Math.min(Math.max(args.windowDays ?? 14, 7), 30);
-    const end = new Date(`${safeTodayKey}T00:00:00Z`).getTime();
-    const dayKeys: string[] = [];
-    for (let i = windowDays - 1; i >= 0; i--) {
-      dayKeys.push(new Date(end - i * 86_400_000).toISOString().slice(0, 10));
-    }
-
-    const members = [];
-    for (const row of [...memberRows].sort((a, b) => a.joinedAt - b.joinedAt)) {
-      const user = await ctx.db.get(row.userId);
-      if (!user) continue;
-
-      // Subjects: every active plan with its lifetime + today's progress.
-      const planRows = await ctx.db
-        .query("plans")
-        .withIndex("by_user", (q) => q.eq("userId", row.userId))
-        .collect();
-      const plans = [];
-      for (const p of planRows.filter((p) => p.status === "active")) {
-        const tasks = await ctx.db
-          .query("tasks")
-          .withIndex("by_plan", (q) => q.eq("planId", p._id))
-          .collect();
-        const done = tasks.filter((t) => t.status === "done");
-        const today = tasks.filter((t) => t.dayKey === safeTodayKey);
-        plans.push({
-          planId: p._id,
-          title: p.title,
-          accent: p.accent,
-          totalTasks: tasks.length,
-          doneTasks: done.length,
-          plannedHours: round4(tasks.reduce((s, t) => s + t.hours, 0)),
-          doneHours: round4(done.reduce((s, t) => s + t.hours, 0)),
-          todayTotal: today.length,
-          todayDone: today.filter((t) => t.status === "done").length,
-        });
-      }
-
-      // Daily completed hours across the comparison window.
-      const series = [];
-      for (const dk of dayKeys) {
-        const dayTasks = await ctx.db
-          .query("tasks")
-          .withIndex("by_user_day", (q) =>
-            q.eq("userId", row.userId).eq("dayKey", dk),
-          )
-          .collect();
-        series.push({
-          dayKey: dk,
-          hours: round4(
-            dayTasks
-              .filter((t) => t.status === "done")
-              .reduce((s, t) => s + t.hours, 0),
-          ),
-        });
-      }
-
-      members.push({
-        userId: row.userId,
-        name: displayName(user, row.userId),
-        isYou: row.userId === userId,
-        plans,
-        series,
-      });
-    }
-
-    return {
-      _id: pod._id,
-      name: pod.name,
-      code: pod.code,
-      dayKeys,
-      members,
-    };
+    return buildBoards(ctx, pod, userId, args.todayKey, args.windowDays ?? 14);
   },
 });
 
