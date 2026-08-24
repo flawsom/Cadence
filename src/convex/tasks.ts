@@ -12,7 +12,7 @@ function roundQuarter(n: number): number {
 // ── Today board ─────────────────────────────────────────────────────────────
 
 export const getBoard = query({
-  args: { dayKey: v.string() },
+  args: { todayKey: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
@@ -26,7 +26,7 @@ export const getBoard = query({
       ctx.db
         .query("tasks")
         .withIndex("by_user_day", (q) =>
-          q.eq("userId", userId).eq("dayKey", args.dayKey),
+          q.eq("userId", userId).eq("dayKey", args.todayKey),
         )
         .collect(),
     ]);

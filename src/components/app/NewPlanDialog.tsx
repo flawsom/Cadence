@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import { todayISO } from "@/lib/planning";
-import { useMutation, useAction } from "convex/react";
+import { useMutation } from "convex/react";
 import { Loader2, Sparkles } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
@@ -44,7 +44,6 @@ export function NewPlanDialog({
   const [targetDays, setTargetDays] = React.useState("30");
   const [pending, setPending] = React.useState(false);
 
-  const ingestSyllabus = useAction(api.plans.ingestSyllabus);
   const createPlan = useMutation(api.plans.createPlan);
   const navigate = useNavigate();
 
@@ -53,20 +52,10 @@ export function NewPlanDialog({
     if (rawInput.trim().length < 2) return;
     setPending(true);
     try {
-      // Try AI sequencing first; the deterministic engine is a real fallback.
-      let parsed: { title?: string; topics?: { title: string; hours: number; level: number }[] };
-      let usedAI = false;
-      try {
-        parsed = await ingestSyllabus({ rawInput });
-        usedAI = (parsed.topics?.length ?? 0) >= 3;
-      } catch {
-        parsed = {};
-      }
-
+      // Cadence's deterministic pacing engine does the sequencing —
+      // fundamentals first, sized to the hours you actually have.
       const result = await createPlan({
         rawInput,
-        title: parsed.title || undefined,
-        topics: usedAI ? parsed.topics : undefined,
         hoursPerDay: Number(hoursPerDay),
         targetDays: Math.max(1, Math.min(366, Number(targetDays) || 30)),
         startDayKey: todayISO(),
@@ -75,9 +64,7 @@ export function NewPlanDialog({
       toast.success(
         `Planned ${result.scheduledDays} day${result.scheduledDays === 1 ? "" : "s"} of study`,
         {
-          description: usedAI
-            ? "Sequenced fundamentals-first by AI."
-            : "Sequenced with Cadence's built-in pacing engine.",
+          description: "Sequenced fundamentals-first by the pacing engine.",
         },
       );
       setRawInput("");

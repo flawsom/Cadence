@@ -1,18 +1,12 @@
-import OpenAI from "openai";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
-import { action, mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   addDaysToDayKey,
   heuristicParse,
   type ParsedTopic,
 } from "./lib";
-
-// ── AI ingestion ────────────────────────────────────────────────────────────
-// Optional accelerator: turns any syllabus text into sequenced topics.
-// When no OPENAI_API_KEY is configured, the client falls back to the
-// deterministic heuristic parser — the app never blocks on AI.
 
 function normalizeTopics(input: unknown): ParsedTopic[] {
   if (!Array.isArray(input)) return [];
@@ -28,43 +22,7 @@ function normalizeTopics(input: unknown): ParsedTopic[] {
     .slice(0, 40);
 }
 
-export const ingestSyllabus = action({
-  args: { rawInput: v.string() },
-  handler: async (_ctx, args) => {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("NO_AI_KEY");
-
-    const client = new OpenAI({ apiKey });
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are Cadence's curriculum planner. From the user's syllabus text or subject description, produce a JSON object: " +
-            '{"title": string (short plan name), "topics": [{"title": string, "hours": number, "level": number}]}. ' +
-            "Order topics fundamentals-first and build toward advanced material (never document order for its own sake). " +
-            "hours is focused study time per topic, between 0.5 and 6, realistic for a diligent human. " +
-            "level is 1 (foundations), 2 (core), or 3 (advanced). Produce between 5 and 24 topics. Return only JSON.",
-        },
-        { role: "user", content: args.rawInput.slice(0, 12_000) },
-      ],
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) throw new Error("EMPTY_AI_RESPONSE");
-    const parsed = JSON.parse(content) as { title?: string; topics?: unknown };
-    const topics = normalizeTopics(parsed.topics);
-    if (topics.length < 3) throw new Error("BAD_AI_RESPONSE");
-    return {
-      title: String(parsed.title ?? "").trim().slice(0, 80),
-      topics,
-    };
-  },
-});
-
-// ── Plan creation + pacing engine ───────────────────────────────────────────
+// ── Plan creation + pacing engine ────────────────────────────────────────
 
 export const createPlan = mutation({
   args: {
@@ -79,7 +37,7 @@ export const createPlan = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not signed in");
 
-    // Resolve topics: provided (AI) or deterministic heuristic.
+    // Resolve topics: provided (AI-assisted client flow) or deterministic heuristic.
     let sourceKind: "ai" | "heuristic" = "heuristic";
     let title = (args.title ?? "").trim().slice(0, 80);
     let topics = normalizeTopics(args.topics);
@@ -92,7 +50,7 @@ export const createPlan = mutation({
     }
     if (!title) title = "Untitled plan";
 
-    // Sequence fundamentals-first (stable sort keeps AI ordering within a level).
+    // Sequence fundamentals-first (stable sort keeps ordering within a level).
     const sequenced = topics
       .map((t, i) => ({ ...t, i }))
       .sort((a, b) => a.level - b.level || a.i - b.i);
@@ -114,18 +72,45 @@ export const createPlan = mutation({
       }
     }
 
-    // Fill days without ever exceeding hoursPerDay.
-    const hoursPerDay = Math.min(10, Math.max(0.5, args.hoursPerDay));
-    const days: { remaining: number; items: Chunk[] }[] = [];
-    for (const chunk of chunks) {
-      let day = days.find((d) => d.remaining >= chunk.hours - 0.001);
-      if (!day) {
-        day = { remaining: hoursPerDay, items: [] };
-        days.push(day);
+    // The daily budget is shared across ALL active plans — running two subjects
+    // never quietly doubles the user's day. Existing open work eats capacity;
+    // chunks that don't fit roll to the next day instead of overloading it.
+    const openTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const loadByDay = new Map<string, number>();
+    for (const t of openTasks) {
+      if (t.status === "open") {
+        loadByDay.set(t.dayKey, (loadByDay.get(t.dayKey) ?? 0) + t.hours);
       }
-      day.items.push(chunk);
-      day.remaining -= chunk.hours;
     }
+
+    const hoursPerDay = Math.min(10, Math.max(0.5, args.hoursPerDay));
+    const roundQuarter = (n: number) => Math.round(n * 4) / 4;
+
+    let offset = 0;
+    let guard = 0;
+    const perDayOrder = new Map<number, number>();
+    const placed: Array<Chunk & { dayOffset: number }> = [];
+    for (const chunk of chunks) {
+      let placedForChunk = false;
+      while (!placedForChunk) {
+        if (guard++ > 5000) throw new Error("Could not fit this plan into a schedule");
+        const key = addDaysToDayKey(args.startDayKey, offset);
+        const existing = loadByDay.get(key) ?? 0;
+        const remaining = Math.max(0, roundQuarter(hoursPerDay - existing));
+        if (remaining >= chunk.hours - 0.001) {
+          loadByDay.set(key, roundQuarter(existing + chunk.hours));
+          placed.push({ ...chunk, dayOffset: offset });
+          placedForChunk = true;
+        } else {
+          offset++;
+        }
+      }
+    }
+
+    const scheduledDays = placed.length > 0 ? Math.max(...placed.map((c) => c.dayOffset)) + 1 : 1;
 
     const now = Date.now();
     const accent = Math.floor(Math.random() * 5);
@@ -136,7 +121,7 @@ export const createPlan = mutation({
       sourceKind,
       hoursPerDay,
       targetDays: args.targetDays,
-      scheduledDays: days.length,
+      scheduledDays,
       status: "active",
       accent,
       createdAt: now,
@@ -153,32 +138,57 @@ export const createPlan = mutation({
       });
     }
 
-    for (let d = 0; d < days.length; d++) {
-      let order = 0;
-      for (const item of days[d].items) {
-        await ctx.db.insert("tasks", {
-          userId,
-          planId,
-          topicId: topicIds[item.topicIdx],
-          title: item.title,
-          kind: "learn",
-          hours: item.hours,
-          dayKey: addDaysToDayKey(args.startDayKey, d),
-          dayIndex: d + 1,
-          order: order++,
-          status: "open",
-          carried: false,
-          reviewSpawned: false,
-          createdAt: now,
-        });
-      }
+    for (const item of placed) {
+      const order = perDayOrder.get(item.dayOffset) ?? 0;
+      perDayOrder.set(item.dayOffset, order + 1);
+      await ctx.db.insert("tasks", {
+        userId,
+        planId,
+        topicId: topicIds[item.topicIdx],
+        title: item.title,
+        kind: "learn",
+        hours: item.hours,
+        dayKey: addDaysToDayKey(args.startDayKey, item.dayOffset),
+        dayIndex: item.dayOffset + 1,
+        order,
+        status: "open",
+        carried: false,
+        reviewSpawned: false,
+        createdAt: now,
+      });
     }
 
-    return { planId, scheduledDays: days.length, usedAI: sourceKind === "ai" };
+    return { planId, scheduledDays, usedSequencing: sequenced.length > 0 };
   },
 });
 
-// ── Queries ─────────────────────────────────────────────────────────────────
+export const archivePlan = mutation({
+  args: { planId: v.id("plans"), archived: v.boolean() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not signed in");
+    const plan = await ctx.db.get(args.planId);
+    if (!plan || plan.userId !== userId) throw new Error("Plan not found");
+
+    await ctx.db.patch(plan._id, { status: args.archived ? "archived" : "active" });
+
+    if (args.archived) {
+      // Archived plans stop counting against the daily budget.
+      const tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_plan", (q) => q.eq("planId", plan._id))
+        .collect();
+      const todayKey = new Date().toISOString().slice(0, 10);
+      for (const t of tasks) {
+        if (t.status === "open" && t.kind === "learn" && t.dayKey >= todayKey) {
+          await ctx.db.delete(t._id);
+        }
+      }
+    }
+  },
+});
+
+// ── Queries ──────────────────────────────────────────────────────────────
 
 const ACCENTS = ["#E85A2A", "#2A9D8F", "#E9B44C", "#7B6CF0", "#DB2763"];
 
@@ -186,7 +196,7 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
+    if (!userId) return [];
 
     const plans = await ctx.db
       .query("plans")
@@ -213,6 +223,7 @@ export const list = query({
           hoursPerDay: plan.hoursPerDay,
           targetDays: plan.targetDays,
           scheduledDays: plan.scheduledDays,
+          sourceKind: plan.sourceKind,
           accent: ACCENTS[plan.accent % ACCENTS.length],
           totalTopics: tasks.filter((t) => t.kind === "learn" && !t.title.includes("(part ")).length,
           doneCount: doneTasks.length,

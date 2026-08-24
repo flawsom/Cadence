@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { fmtHours, todayISO } from "@/lib/planning";
 import { CalendarCheck2, Flame, Library, LogOut, Users } from "lucide-react";
+import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 
@@ -21,8 +22,12 @@ export default function Dashboard() {
   const stats = useQuery(api.tasks.getStats, { todayKey });
   const syncRollover = useMutation(api.tasks.syncRollover);
 
-  // Carry unfinished work forward the moment the app opens — visibly.
-  void syncRollover({ todayKey }).catch(() => undefined);
+  // Carry unfinished work forward the moment the app opens — visibly,
+  // once per day per session (TodayView surfaces the toast).
+  useEffect(() => {
+    syncRollover({ todayKey }).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayKey]);
 
   const handleSignOut = async () => {
     await signOut();
