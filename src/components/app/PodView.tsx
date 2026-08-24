@@ -1,5 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { api } from "@/convex/_generated/api";
 import { fmtHours, prettyDate, todayISO } from "@/lib/planning";
 import { useMutation, useQuery } from "convex/react";
@@ -117,6 +128,8 @@ function NoPod() {
 }
 
 function PodDashboard({ pod }: { pod: Pod }) {
+  const leavePod = useMutation(api.pods.leavePod);
+
   return (
     <>
       <InviteBar name={pod.name} code={pod.code} />
@@ -156,9 +169,40 @@ function PodDashboard({ pod }: { pod: Pod }) {
             </div>
           );
         })}
-        <p className="mt-1 px-1 text-xs text-muted-foreground">
-          Members appear by join date — never ranked. Showing up is the whole game.
-        </p>
+        <div className="mt-1 flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            Members appear by join date — never ranked. Showing up is the whole game.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
+                Leave pod
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Leave {pod.name}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You&apos;ll stop seeing each other&apos;s daily progress, and your
+                  check-ins stay behind. Your own plans are untouched — you can
+                  always rejoin with the code later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Stay</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    void leavePod().catch((err: unknown) =>
+                      toast.error(err instanceof Error ? err.message : "Couldn't leave pod"),
+                    );
+                  }}
+                >
+                  Leave pod
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </section>
     </>
   );
