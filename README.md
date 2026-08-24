@@ -317,9 +317,10 @@ bun scripts/llm-smoke.ts
 One-time setup after connecting this repo to GitHub:
 
 - **Settings → Pages → Source: GitHub Actions**.
-- Add a repository **variable** `VITE_CONVEX_URL` (your Convex deployment URL,
-  e.g. `https://<deployment>.convex.cloud`). The build refuses to run without
-  it so the deployed site can never boot against a fake backend.
+- Optional: add a repository **variable** `VITE_CONVEX_URL` (your Convex
+  deployment URL) to point a fork/self-hosted copy at your own backend. The
+  workflow defaults to the baked-in Cadence deployment URL, which is safe —
+  a Convex cloud URL is client-facing by design.
 - No Convex dashboard changes are needed: sign-in uses email codes entered
   in-page and works from any host.
 

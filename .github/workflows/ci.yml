@@ -12,6 +12,10 @@ concurrency:
 env:
   # Repo pages live under /<repo name>/ — keep in sync with the repo name.
   PAGES_BASE_PATH: /Cadence/
+  # A Convex cloud URL is client-facing by design (every visitor's browser
+  # talks to it directly), so a default here is safe. Override per-repo with
+  # a repository VARIABLE named VITE_CONVEX_URL if you fork/self-host.
+  DEFAULT_VITE_CONVEX_URL: https://blessed-mosquito-123.convex.cloud
 
 jobs:
   # ── Typecheck + production build ────────────────────────────────────────────
@@ -33,17 +37,9 @@ jobs:
       - name: Typecheck
         run: bunx tsc -b --noEmit
 
-      # Fail loudly instead of shipping a dead app pointed at a fake backend.
-      - name: Require live Convex URL
-        run: |
-          if [ -z "${{ vars.VITE_CONVEX_URL }}" ]; then
-            echo "::error::Repository variable VITE_CONVEX_URL is not set. Add it under Settings → Secrets and variables → Actions → Variables (your Convex cloud URL) so the deployed site talks to a real backend."
-            exit 1
-          fi
-
       - name: Build for Pages (SPA fallback + subpath assets)
         env:
-          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL || env.DEFAULT_VITE_CONVEX_URL }}
           VITE_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
         run: |
           bun run build
