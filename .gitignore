@@ -1,4 +1,6 @@
 .env.local
 node_modules
 dist
-src/convex/_generated
+# src/convex/_generated is intentionally COMMITTED (see convex codegen docs:
+# "should be committed to the repo — your code won't typecheck without it")
+# so CI typechecks without needing Convex deployment credentials.

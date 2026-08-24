@@ -305,8 +305,9 @@ bun scripts/llm-smoke.ts
 
 `.github/workflows/ci.yml` runs three jobs on every push/PR:
 
-1. **Typecheck & build** — regenerates Convex types (`bunx convex codegen`, no
-   deployment auth required), typechecks, and produces the Pages build.
+1. **Typecheck & build** — typechecks against the committed Convex generated
+   types (`src/convex/_generated` is checked in, per the `convex codegen`
+   docs, so no deployment auth is needed) and produces the Pages build.
 2. **Local LLM smoke test** — installs Ollama *on the runner*, pulls
    `qwen2.5:1.5b-instruct`, serves it, and verifies it answers Cadence's real
    ingestion prompt with valid topic JSON. No paid APIs anywhere.
@@ -317,8 +318,8 @@ One-time setup after connecting this repo to GitHub:
 
 - **Settings → Pages → Source: GitHub Actions**.
 - Add a repository **variable** `VITE_CONVEX_URL` (your Convex deployment URL,
-  e.g. `https://<deployment>.convex.cloud`) so the deployed site talks to a real
-  backend. Without it the build still passes but uses a placeholder.
-- On the Convex side, set `CONVEX_SITE_URL` to your Pages URL
-  (`https://flawsom.github.io/Cadence`) so auth redirects work.
+  e.g. `https://<deployment>.convex.cloud`). The build refuses to run without
+  it so the deployed site can never boot against a fake backend.
+- No Convex dashboard changes are needed: sign-in uses email codes entered
+  in-page and works from any host.
 
