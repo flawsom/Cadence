@@ -1,3 +1,4 @@
+// Cadence landing page — WebGL hero, no local cursor trails (mounted globally in main.tsx).
 import { useAuth } from "@/hooks/use-auth";
 import { HeroCanvas } from "@/components/HeroCanvas";
 import { CadenceMark, CadenceWordmark } from "@/components/CadenceMark";

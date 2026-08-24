@@ -1,3 +1,4 @@
+// Cadence app bootstrap — trails mounted globally below.
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { CursorTrails } from "@/components/CursorTrails";
