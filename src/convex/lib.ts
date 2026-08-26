@@ -380,6 +380,74 @@ function buildDomainScaffold(s: string, cap: string): ParsedTopic[] {
   }));
 }
 
+/**
+ * Generate practice problems and a challenge for any topic, based on its
+ * title and the detected domain. Used to enrich syllabus-parsed topics
+ * that don't already have practice/challenge data.
+ */
+function generatePracticeProblems(
+  topicTitle: string,
+  domain: Domain,
+): { practice: string[]; challenge: string } {
+  const t = topicTitle.slice(0, 80);
+  switch (domain) {
+    case "programming":
+      return {
+        practice: [
+          `Write a short program demonstrating ${t} with working code and comments`,
+          `Explain ${t} in your own words, listing 3 key concepts and why they matter`,
+          `Find and fix 2 bugs in a code snippet that uses ${t}`,
+        ],
+        challenge: `Design and implement a real-world feature using ${t} — include edge cases, error handling, and at least one test`,
+      };
+    case "math":
+      return {
+        practice: [
+          `Solve 3 problems related to ${t}, showing all steps clearly`,
+          `Explain the intuition behind ${t} — what does it represent geometrically or numerically?`,
+          `Prove or disprove a simple claim about ${t} using formal reasoning`,
+        ],
+        challenge: `Solve a challenging multi-step problem involving ${t} that requires combining it with at least one other concept`,
+      };
+    case "science":
+      return {
+        practice: [
+          `Describe ${t} with a real-world example or experiment`,
+          `List the key terms and definitions related to ${t}`,
+          `Explain how ${t} connects to everyday life or current research`,
+        ],
+        challenge: `Design an experiment or analysis that applies ${t} to answer a specific scientific question`,
+      };
+    case "language":
+      return {
+        practice: [
+          `Write 5 sentences using ${t} in context`,
+          `Explain the grammar rules behind ${t} with examples`,
+          `Translate a short paragraph that practices ${t}`,
+        ],
+        challenge: `Write a short essay or conversation that naturally incorporates ${t} with correct usage`,
+      };
+    case "music":
+      return {
+        practice: [
+          `Practice ${t} slowly, then gradually increase tempo`,
+          `Explain the theory behind ${t} and why it sounds the way it does`,
+          `Record yourself performing ${t} and identify areas for improvement`,
+        ],
+        challenge: `Perform ${t} in a musical context — combine it with other elements to create a complete piece`,
+      };
+    default:
+      return {
+        practice: [
+          `Summarize the key ideas of ${t} in your own words`,
+          `Create a study note or mind map covering ${t}`,
+          `Apply ${t} to a practical scenario or real-world situation`,
+        ],
+        challenge: `Write a comprehensive explanation of ${t} that someone new to the subject could understand`,
+      };
+  }
+}
+
 /** Deterministic fallback parser: real sequencing, no AI required. */
 export function heuristicParse(raw: string): {
   title: string;
@@ -543,7 +611,15 @@ export function heuristicParse(raw: string): {
       level: Math.min(a.level, b.level),
     });
   }
-  return { title, topics: merged };
+  // Enrich syllabus-parsed topics with practice/challenge if missing.
+  const enriched = merged.map((t) => {
+    if (t.practice && t.practice.length > 0) return t;
+    const subject = title || cleaned.split("\n")[0]?.trim() || "the subject";
+    const domain = classifySubject(subject);
+    const pp = generatePracticeProblems(t.title, domain);
+    return { ...t, practice: pp.practice, challenge: pp.challenge };
+  });
+  return { title, topics: enriched };
 
   // Title priority: course-code/header line > first clean topic > raw first line.
   if (!title) {
