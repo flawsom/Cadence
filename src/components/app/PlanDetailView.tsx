@@ -6,7 +6,8 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { fmtHours, prettyDate } from "@/lib/planning";
 import { useQuery } from "convex/react";
-import { ArrowLeft, TriangleAlert } from "lucide-react";
+import { generateFlashcards, toAnkiTSV, downloadFile } from "@/lib/flashcards";
+import { ArrowLeft, Download, TriangleAlert } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 const LEVELS: Record<number, { label: string; className: string }> = {
@@ -87,7 +88,40 @@ export default function PlanDetailView() {
               <span>{detail.scheduledDays} days at {fmtHours(detail.hoursPerDay)}/day</span>
             </p>
           </div>
-          <Badge variant="secondary" className="gap-1.5 rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-full"
+              onClick={() => {
+                const safeName = detail.title.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30);
+                // Collect all practice problems from tasks
+                const taskCards: { front: string; back: string; tags: string[] }[] = [];
+                for (const d of detail.days) {
+                  for (const t of d.tasks) {
+                    const problems = [
+                      ...(t.practiceProblems ?? []),
+                      ...(t.challengeProblem ? ["🏆 " + t.challengeProblem] : []),
+                    ];
+                    for (const p of problems) {
+                      const topicContext = t.title;
+                      const parentCtx = t.parentTopic ? " (from: " + t.parentTopic + ")" : "";
+                      taskCards.push({
+                        front: p,
+                        back: "Topic: " + topicContext + parentCtx + "\n\nHint: Think about the key concepts from this topic.",
+                        tags: [safeName, t.kind],
+                      });
+                    }
+                  }
+                }
+                if (taskCards.length > 0) {
+                  downloadFile(toAnkiTSV(taskCards), safeName + "-flashcards.txt", "text/tab-separated-values");
+                }
+              }}
+            >
+              <Download className="size-3.5" /> Export flashcards
+            </Button>
+            <Badge variant="secondary" className="gap-1.5 rounded-full px-3 py-1.5">
             {detail.sourceKind === "ai" ? (
               <>
                 <span className="size-1.5 rounded-full bg-primary" /> AI-sequenced
@@ -98,6 +132,7 @@ export default function PlanDetailView() {
               </>
             )}
           </Badge>
+          </div>
         </div>
         {overflow && (
           <div className="flex items-start gap-2.5 rounded-2xl border border-chart-3/40 bg-chart-3/10 px-4 py-3 text-sm">

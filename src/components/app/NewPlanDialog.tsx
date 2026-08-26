@@ -21,7 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import { todayISO } from "@/lib/planning";
 import { useAction, useMutation } from "convex/react";
-import { Loader2, Sparkles } from "lucide-react";
+import { extractTextFromPDF, isPDF } from "@/lib/extract-pdf";
+import { FileUp, Loader2, Sparkles } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -43,6 +44,8 @@ export function NewPlanDialog({
   const [hoursPerDay, setHoursPerDay] = React.useState("2");
   const [targetDays, setTargetDays] = React.useState("30");
   const [schedulingMode, setSchedulingMode] = React.useState<"parallel" | "sequential">("parallel");
+  const [pdfLoading, setPdfLoading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [pending, setPending] = React.useState(false);
 
   const ingestSyllabus = useAction(api.ai.ingestSyllabus);
@@ -122,6 +125,51 @@ export function NewPlanDialog({
               minLength={2}
               className="max-h-56 overflow-y-auto resize-y"
             />
+            {/* PDF upload */}
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or upload PDF</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !isPDF(file)) return;
+                setPdfLoading(true);
+                try {
+                  const text = await extractTextFromPDF(file);
+                  if (text.trim().length > 10) {
+                    setRawInput(text.trim());
+                    toast.success("PDF extracted", { description: "Syllabus text loaded into the editor." });
+                  } else {
+                    toast.error("Could not extract text", { description: "The PDF may be image-based. Try pasting the text instead." });
+                  }
+                } catch {
+                  toast.error("Failed to read PDF", { description: "Try a different file or paste the text manually." });
+                } finally {
+                  setPdfLoading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 rounded-xl"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={pdfLoading}
+            >
+              {pdfLoading ? (
+                <><Loader2 className="size-4 animate-spin" /> Extracting text…</>
+              ) : (
+                <><FileUp className="size-4" /> Upload PDF syllabus</>
+              )}
+            </Button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">

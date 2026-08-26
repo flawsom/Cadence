@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { fmtHours, todayISO } from "@/lib/planning";
-import { CalendarCheck2, Flame, Library, LogOut, Users } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
+import { CalendarCheck2, Flame, Library, LogOut, Moon, Sun, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
@@ -121,9 +122,12 @@ export default function Dashboard() {
               <p className="truncate font-medium">{user?.name ?? user?.email ?? "You"}</p>
               <p className="truncate text-muted-foreground">Signed in</p>
             </div>
-            <Button variant="ghost" size="icon-sm" onClick={handleSignOut} aria-label="Sign out">
-              <LogOut className="size-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <Button variant="ghost" size="icon-sm" onClick={handleSignOut} aria-label="Sign out">
+                <LogOut className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
@@ -132,5 +136,19 @@ export default function Dashboard() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { isDark, toggle } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={toggle}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </Button>
   );
 }
