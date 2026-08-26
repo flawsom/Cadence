@@ -6,6 +6,7 @@ import { fmtHours } from "@/lib/planning";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { AnswerForm } from "@/components/app/AnswerForm";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
@@ -26,6 +27,7 @@ export interface TaskRowData {
   reviewStage?: number;
   practiceProblems?: string[];
   challengeProblem?: string;
+  planId?: Id<"plans">;
 }
 
 export function TaskRow({
@@ -138,10 +140,21 @@ export function TaskRow({
                   <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
                     <PencilRuler className="size-3" /> Practice problems
                   </p>
-                  <ol className="list-decimal space-y-1 pl-4">
+                  <ol className="list-decimal space-y-3 pl-4">
                     {task.practiceProblems.map((p, i) => (
-                      <li key={i} className="text-xs leading-relaxed text-muted-foreground">
-                        {p}
+                      <li key={i} className="flex flex-col gap-1">
+                        <span className="text-xs leading-relaxed text-muted-foreground">
+                          {p}
+                        </span>
+                        {task.planId && (
+                          <AnswerForm
+                            taskId={task._id}
+                            planId={task.planId}
+                            problemIndex={i}
+                            problemText={p}
+                            topicContext={task.title}
+                          />
+                        )}
                       </li>
                     ))}
                   </ol>
@@ -155,6 +168,15 @@ export function TaskRow({
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     {task.challengeProblem}
                   </p>
+                  {task.planId && (
+                    <AnswerForm
+                      taskId={task._id}
+                      planId={task.planId}
+                      problemIndex={-1}
+                      problemText={task.challengeProblem}
+                      topicContext={task.title}
+                    />
+                  )}
                 </div>
               )}
             </div>

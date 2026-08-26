@@ -101,6 +101,33 @@ const schema = defineSchema(
       .index("by_pod", ["podId"])
       .index("by_user", ["userId"]),
 
+    // A user's answer to a practice problem or challenge.
+    answers: defineTable({
+      userId: v.id("users"),
+      taskId: v.id("tasks"),
+      planId: v.id("plans"),
+      problemIndex: v.number(), // 0-based for practice, -1 for challenge
+      problemText: v.string(), // the original problem statement
+      answer: v.string(), // user's submitted answer
+      score: v.optional(v.number()), // 0-100
+      feedback: v.optional(
+        v.object({
+          summary: v.string(),
+          strengths: v.array(v.string()),
+          weaknesses: v.array(v.string()),
+          improvedAnswer: v.optional(v.string()),
+          explanation: v.string(), // professor-level detailed explanation
+          diagram: v.optional(v.string()), // mermaid diagram or SVG
+          equations: v.optional(v.array(v.string())), // LaTeX equations
+        }),
+      ),
+      status: v.union(v.literal("submitted"), v.literal("evaluated"), v.literal("error")),
+      createdAt: v.number(),
+      evaluatedAt: v.optional(v.number()),
+    })
+      .index("by_user", ["userId"])
+      .index("by_task", ["taskId"]),
+
     // A daily check-in note inside a pod (one per member per day).
     checkins: defineTable({
       podId: v.id("pods"),

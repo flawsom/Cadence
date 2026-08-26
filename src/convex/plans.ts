@@ -280,6 +280,7 @@ export const detail = query({
             parentTopic: t.topicId ? topicTitle.get(t.topicId) : undefined,
             practiceProblems: t.practiceProblems,
             challengeProblem: t.challengeProblem,
+            planId: t.planId,
           })),
       }));
 
