@@ -40,7 +40,7 @@ function hasExamples(text: string): boolean {
 }
 
 function hasReasoning(text: string): boolean {
-  return /\b(because|therefore|thus|hence|since|this means|the reason|as a result|consequently|this shows|this demonstrates|in order to|so that|this is because|the key reason|the purpose|this ensures|this allows|this enables)\b/i.test(text);
+  return /\b(because|therefore|thus|hence|since|this means|the reason|as a result|consequently|this shows|this demonstrates|in order to|so that|this is because|the key reason|the purpose|this ensures|this allows|this enables|which means|which allows|which ensures|allowing|enabling|ensuring|providing|rather than|instead of|compared to|which is why|this is why|making it|so it|to avoid|to prevent|to handle|to support|to enforce|to implement|to provide|to enable|to ensure|used to|which underpins|which underlie)\b/i.test(text);
 }
 
 function hasStructure(text: string): boolean {
@@ -48,7 +48,7 @@ function hasStructure(text: string): boolean {
 }
 
 function hasDefinition(text: string): boolean {
-  return /\b(is defined as|refers to|means|can be described as|is a |is the |is known as|essentially|fundamentally|basically|in essence|by definition)\b/i.test(text);
+  return /\b(is defined as|refers to|means|can be described as|is a |is the |is known as|essentially|fundamentally|basically|in essence|by definition|is called|are called|known as|termed|defined|describes|describes how|describes the|which is|used to|used for|allows|enables|provides|offers|supports|implements|underpins|enforces|controls|generates|auto-generates)\b/i.test(text);
 }
 
 function hasComparison(text: string): boolean {
@@ -112,47 +112,62 @@ function evaluateStructure(answer: string, problemText: string): EvalResult {
   const technical = hasTechnicalDepth(answer);
   const termCoverage = hasKeyTerms(answer, problemText);
 
-  // ── Completeness (0-100): generous curve for length ──
-  // 0 words = 0, 10 words = 25, 30 words = 55, 60+ words = 80-100
-  const completeness = wc === 0
+  // ── Completeness (0-100): curve rewards length AND multi-paragraph structure ──
+  // Single paragraphs are capped lower; multi-paragraph answers earn more.
+  const lengthScore = wc === 0
     ? 0
     : wc <= 10
       ? wc * 2.5
       : wc <= 30
-        ? 25 + (wc - 10) * 1.5
+        ? 25 + (wc - 10) * 1.0
         : wc <= 60
-          ? 55 + (wc - 30) * 0.8
-          : Math.min(100, 80 + (wc - 60) * 0.15);
+          ? 45 + (wc - 30) * 0.6
+          : wc <= 100
+            ? 63 + (wc - 60) * 0.3
+            : Math.min(100, 75 + (wc - 100) * 0.1);
+  const structureMultiplier = pc >= 4 ? 1.15 : pc >= 2 ? 1.05 : pc === 1 ? 0.85 : 1.0;
+  const completeness = Math.min(100, Math.round(lengthScore * structureMultiplier));
 
-  // ── Relevance (0-100): key term coverage ──
-  const relevance = Math.min(100, termCoverage * 110); // slight boost for high coverage
+  // ── Relevance (0-100): key term coverage + technical vocabulary bonus ──
+  const termScore = Math.min(100, termCoverage * 110);
+  const techBonus = technical ? 15 : 0; // bonus for domain-specific vocabulary
+  const relevance = Math.min(100, termScore + techBonus);
 
   // ── Depth (0-100): accumulation of quality signals ──
-  // Each signal adds points; partial credit for some
+  // Technical depth is weighted heavily — expert answers use domain vocabulary
   const depthSignals = [
-    { hit: definition, pts: 15 },
-    { hit: examples, pts: 20 },
-    { hit: reasoning, pts: 25 },
-    { hit: structured, pts: 15 },
-    { hit: comparison, pts: 10 },
-    { hit: conclusion, pts: 8 },
-    { hit: technical, pts: 7 },
+    { hit: definition, pts: 12 },
+    { hit: examples, pts: 18 },
+    { hit: reasoning, pts: 22 },
+    { hit: structured, pts: 10 },
+    { hit: comparison, pts: 8 },
+    { hit: conclusion, pts: 5 },
+    { hit: technical, pts: 25 }, // heavily rewarded — expert answers use technical terms
   ];
   const depth = Math.min(100, depthSignals.reduce((sum, s) => sum + (s.hit ? s.pts : 0), 0));
 
-  // ── Presentation (0-100): readability and form ──
-  const sentenceScore = Math.min(40, sc >= 8 ? 40 : sc >= 5 ? 30 : sc >= 3 ? 20 : sc * 5);
-  const paragraphScore = Math.min(30, pc >= 4 ? 30 : pc >= 2 ? 15 : pc * 5);
-  const wordScore = wc > 100 ? 30 : wc > 50 ? 25 : wc > 30 ? 15 : wc > 10 ? 8 : 0;
+  // ── Presentation (0-100): strongly rewards multi-paragraph structure ──
+  // Single paragraphs cap at ~55; multi-paragraph answers earn much more.
+  const sentenceScore = Math.min(25, sc >= 8 ? 25 : sc >= 5 ? 18 : sc >= 3 ? 12 : sc * 3);
+  const paragraphScore = pc >= 5 ? 40 : pc >= 3 ? 30 : pc >= 2 ? 20 : 10; // single para = 10 max
+  const wordScore = wc > 100 ? 35 : wc > 60 ? 25 : wc > 30 ? 15 : wc > 10 ? 5 : 0;
   const presentation = Math.min(100, sentenceScore + paragraphScore + wordScore);
 
   // ── Weighted total ──
-  const score = Math.round(
+  let score = Math.round(
     completeness * 0.20 +
-    relevance * 0.25 +
-    depth * 0.35 +
-    presentation * 0.20,
+    relevance * 0.20 +
+    depth * 0.30 +
+    presentation * 0.30,  // structure matters a lot: single paragraph vs multi-part essay
   );
+
+  // ── Expert bonus: genuinely deep answers with multiple quality signals ──
+  // Only triggers for multi-paragraph, deeply structured expert essays
+  // Requires: 80+ words, technical vocabulary, AND at least one advanced signal (comparison or conclusion)
+  const advancedSignals = [comparison, conclusion].filter(Boolean).length;
+  if (wc >= 80 && technical && advancedSignals >= 1 && (reasoning || examples)) {
+    score = Math.min(100, score + 10);
+  }
 
   // ── Strengths ──
   const strengths: string[] = [];
