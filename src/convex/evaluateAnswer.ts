@@ -103,9 +103,26 @@ export const evaluate = action({
     }
     if (!content) throw new Error("NO_LLM_EMPTY");
 
-    // Tolerate models that wrap JSON in prose or code fences.
-    const jsonStart = content.indexOf("{");
-    const jsonEnd = content.lastIndexOf("}");
+    // Tolerate models that wrap JSON in prose, code fences, or <think> blocks.
+    let jsonStart = -1;
+    let jsonEnd = -1;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let i = 0; i < content.length; i++) {
+      const ch = content[i];
+      if (escape) { escape = false; continue; }
+      if (ch === "\\" && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (ch === "{") {
+        if (depth === 0) jsonStart = i;
+        depth++;
+      } else if (ch === "}") {
+        depth--;
+        if (depth === 0 && jsonStart !== -1) { jsonEnd = i; break; }
+      }
+    }
     if (jsonStart === -1 || jsonEnd <= jsonStart) throw new Error("NO_LLM_NOT_JSON");
 
     let parsed: Record<string, unknown>;
