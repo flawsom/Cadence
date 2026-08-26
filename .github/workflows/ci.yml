@@ -73,8 +73,8 @@ jobs:
           done
           curl -sf http://127.0.0.1:11434/api/tags > /dev/null
 
-      - name: Pull model (qwen2.5 1.5B — small, fast, JSON-reliable)
-        run: ollama pull qwen2.5:1.5b-instruct
+      - name: Pull model (qwen3 4B — reasoning leap over 1.5B, fits 7GB runner)
+        run: ollama pull qwen3:4b
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -86,6 +86,8 @@ jobs:
       - name: Run ingestion smoke test against the local model
         timeout-minutes: 10
         run: bun scripts/llm-smoke.ts
+        env:
+          LLM_MODEL: qwen3:4b
 
   # ── GitHub Pages deploy — only after checks AND the LLM job pass ───────────
   deploy-pages:

@@ -9,7 +9,7 @@
  *
  * Environment variables (all optional):
  *   LLM_BASE_URL  default: http://127.0.0.1:11434/v1
- *   LLM_MODEL     default: qwen2.5:1.5b-instruct
+ *   LLM_MODEL     default: qwen3:4b
  *   LLM_API_KEY   optional Bearer token (some gateways require one)
  *
  * Every failure mode throws; the client falls back to the deterministic
@@ -20,7 +20,7 @@ import { action } from "./_generated/server";
 import { SYLLABUS_SYSTEM_PROMPT, normalizeTopics } from "./lib";
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:11434/v1";
-const DEFAULT_MODEL = "qwen2.5:1.5b-instruct";
+const DEFAULT_MODEL = "qwen3:4b";
 const TIMEOUT_MS = 180_000;
 
 export const ingestSyllabus = action({

@@ -14,7 +14,7 @@
  */
 import { normalizeTopics } from "../src/convex/lib";
 const BASE_URL = (process.env.LLM_BASE_URL ?? "http://127.0.0.1:11434/v1").replace(/\/$/, "");
-const MODEL = process.env.LLM_MODEL ?? "qwen2.5:1.5b-instruct";
+const MODEL = process.env.LLM_MODEL ?? "qwen3:4b";
 
 // Kept in sync with src/convex/lib.ts — CI fails loudly if they drift apart,
 // because this file reads the source of truth directly.
