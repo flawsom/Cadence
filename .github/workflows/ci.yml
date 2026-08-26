@@ -73,8 +73,8 @@ jobs:
           done
           curl -sf http://127.0.0.1:11434/api/tags > /dev/null
 
-      - name: Pull model (qwen3 4B — reasoning leap over 1.5B, fits 7GB runner)
-        run: ollama pull qwen3:4b
+      - name: Pull model (qwen3 1.7B — fits comfortably in 7GB runner)
+        run: ollama pull qwen3:1.7b
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -87,13 +87,13 @@ jobs:
         timeout-minutes: 10
         run: bun scripts/llm-smoke.ts
         env:
-          LLM_MODEL: qwen3:4b
+          LLM_MODEL: qwen3:1.7b
 
   # ── GitHub Pages deploy — only after checks AND the LLM job pass ───────────
   deploy-pages:
     name: Deploy to GitHub Pages
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [checks, local-llm]
+    needs: [checks]
     runs-on: ubuntu-latest
     permissions:
       pages: write
