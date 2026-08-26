@@ -381,71 +381,227 @@ function buildDomainScaffold(s: string, cap: string): ParsedTopic[] {
 }
 
 /**
- * Generate practice problems and a challenge for any topic, based on its
- * title and the detected domain. Used to enrich syllabus-parsed topics
- * that don't already have practice/challenge data.
+ * Generate practice problems and a challenge for any topic.
+ * Detects the actual subject matter and generates genuinely specific problems.
  */
 function generatePracticeProblems(
   topicTitle: string,
-  domain: Domain,
+  _domain: Domain,
 ): { practice: string[]; challenge: string } {
   const t = topicTitle.slice(0, 80);
-  switch (domain) {
-    case "programming":
+  const tl = t.toLowerCase();
+
+  // ── Math: transforms, proofs, equations ──
+  if (/\b(laplace|fourier|z.transform|transform|integral|derivative|differential|ode|pde|convolution|linearity|shifting|inverse.*(transform|laplace|fourier))\b/.test(tl)) {
+    // Detect if the topic is a property/concept vs an operation
+    const isProperty = /\b(linearity|shifting|convolution|inverse)\b/.test(tl);
+    if (isProperty) {
       return {
         practice: [
-          `Write a short program demonstrating ${t} with working code and comments`,
-          `Explain ${t} in your own words, listing 3 key concepts and why they matter`,
-          `Find and fix 2 bugs in a code snippet that uses ${t}`,
+          `Explain what ${t} means in the context of transforms — give a precise definition with an example`,
+          `Apply ${t} to simplify a complex transform computation — show the before and after`,
+          `State the formal property of ${t}, prove it for one case, and explain why it is useful`,
         ],
-        challenge: `Design and implement a real-world feature using ${t} — include edge cases, error handling, and at least one test`,
+        challenge: `Derive the formal statement of ${t} from first principles, prove it, and apply it to solve a non-trivial problem that would be difficult without this property`,
       };
-    case "math":
-      return {
-        practice: [
-          `Solve 3 problems related to ${t}, showing all steps clearly`,
-          `Explain the intuition behind ${t} — what does it represent geometrically or numerically?`,
-          `Prove or disprove a simple claim about ${t} using formal reasoning`,
-        ],
-        challenge: `Solve a challenging multi-step problem involving ${t} that requires combining it with at least one other concept`,
-      };
-    case "science":
-      return {
-        practice: [
-          `Describe ${t} with a real-world example or experiment`,
-          `List the key terms and definitions related to ${t}`,
-          `Explain how ${t} connects to everyday life or current research`,
-        ],
-        challenge: `Design an experiment or analysis that applies ${t} to answer a specific scientific question`,
-      };
-    case "language":
-      return {
-        practice: [
-          `Write 5 sentences using ${t} in context`,
-          `Explain the grammar rules behind ${t} with examples`,
-          `Translate a short paragraph that practices ${t}`,
-        ],
-        challenge: `Write a short essay or conversation that naturally incorporates ${t} with correct usage`,
-      };
-    case "music":
-      return {
-        practice: [
-          `Practice ${t} slowly, then gradually increase tempo`,
-          `Explain the theory behind ${t} and why it sounds the way it does`,
-          `Record yourself performing ${t} and identify areas for improvement`,
-        ],
-        challenge: `Perform ${t} in a musical context — combine it with other elements to create a complete piece`,
-      };
-    default:
-      return {
-        practice: [
-          `Summarize the key ideas of ${t} in your own words`,
-          `Create a study note or mind map covering ${t}`,
-          `Apply ${t} to a practical scenario or real-world situation`,
-        ],
-        challenge: `Write a comprehensive explanation of ${t} that someone new to the subject could understand`,
-      };
+    }
+    return {
+      practice: [
+        `Compute the ${t} of 3 different functions, showing every step of the calculation`,
+        `Use ${t} to solve an ordinary differential equation — verify your answer by substituting back`,
+        `Explain the physical meaning of ${t} — what does it tell us about the original function?`,
+      ],
+      challenge: `Solve a real-world engineering problem using ${t}: model a physical system as a differential equation, apply the transform, solve algebraically, and interpret the result in the original domain`,
+    };
   }
+  if (/\b(probability|conditional|bayes|independent|joint|mutual)\b/.test(tl)) {
+    return {
+      practice: [
+        `Calculate ${t} for 3 different scenarios with given numerical values`,
+        `Explain the difference between ${t} and marginal probability using a Venn diagram`,
+        `Solve a word problem that requires applying ${t} to a real-world situation`,
+      ],
+      challenge: `Design a probability model for a complex real-world scenario, calculate ${t} and related quantities, and explain your assumptions`,
+    };
+  }
+  if (/\b(distribution|binomial|poisson|normal|exponential|uniform|geometric|hypergeometric)\b/.test(tl)) {
+    return {
+      practice: [
+        `Calculate the mean, variance, and standard deviation for ${t} with given parameters`,
+        `Use ${t} to model a real-world phenomenon and justify why this distribution is appropriate`,
+        `Find the probability of 3 different events using ${t} — show the formula and calculation`,
+      ],
+      challenge: `Compare ${t} with 2 other distributions for the same scenario — which fits best and why? Include numerical analysis`,
+    };
+  }
+  if (/\b(statistics|regression|correlation|confidence interval|estimation|hypothesis testing|random sampling|mean|median|descriptive|inferential)\b/.test(tl)) {
+    return {
+      practice: [
+        `Calculate ${t} from a given dataset of 10 values — show your work step by step`,
+        `Explain what ${t} measures and give an example where it would be misleading`,
+        `Interpret a real-world example of ${t} from a published study or report`,
+      ],
+      challenge: `Perform a complete statistical analysis: collect or use a dataset, calculate ${t}, interpret the results, and discuss limitations of your analysis`,
+    };
+  }
+  if (/\b(matrix|matrices|eigenvalue|eigenvector|determinant|inverse matrix|transpose|linear transformation|vector space|svd|singular value)\b/.test(tl)) {
+    return {
+      practice: [
+        `Perform ${t} on a 3x3 matrix — show every arithmetic step`,
+        `Explain the geometric interpretation of ${t} in 2D and 3D space`,
+        `Solve a system of linear equations using ${t}`,
+      ],
+      challenge: `Apply ${t} to a real-world problem in physics, computer graphics, or data science — show the setup, computation, and interpretation`,
+    };
+  }
+  if (/\b(equation|solve|quadratic|polynomial|algebra|factor)\b/.test(tl)) {
+    return {
+      practice: [
+        `Solve 3 equations of increasing difficulty involving ${t}`,
+        `Explain the algebraic reasoning behind each step of solving ${t}`,
+        `Verify your solutions by substituting back into the original equation`,
+      ],
+      challenge: `Solve a complex equation that requires multiple techniques, and explain why each technique is necessary`,
+    };
+  }
+  if (/\b(series|sequence|convergence|sum|telescoping|geometric series)\b/.test(tl)) {
+    return {
+      practice: [
+        `Determine whether the series ${t} converges or diverges — state the test you use`,
+        `Calculate the sum of ${t} if it converges, showing all steps`,
+        `Compare ${t} with a known series to establish convergence bounds`,
+      ],
+      challenge: `Analyze the convergence behavior of ${t} under different parameter values and create a summary table`,
+    };
+  }
+
+  // ── Programming: code, implement, build ──
+  if (/\b(implement|write|code|program|build|deploy|refactor|debug|test|function|class|method|api|algorithm|data structure|array|linked list|hash|sort|search|recursion|database|sql|query|stack|queue|tree|graph|heap)\b/.test(tl)) {
+    return {
+      practice: [
+        `Implement ${t} from scratch — write working code with clear comments explaining each step`,
+        `Explain the time and space complexity of your implementation and identify one optimization`,
+        `Write 3 test cases that cover normal input, edge cases, and error conditions`,
+      ],
+      challenge: `Build a complete, production-quality implementation of ${t} with error handling, documentation, and a test suite`,
+    };
+  }
+  if (/\b(inheritance|polymorphism|encapsulation|abstraction|interface|abstract|override|overload|oop|object.oriented)\b/.test(tl)) {
+    return {
+      practice: [
+        `Design a class hierarchy demonstrating ${t} — write the actual class definitions with methods`,
+        `Write a code example where ${t} solves a real problem, and explain why the alternative approach is worse`,
+        `Identify and fix a design flaw in code that violates ${t} principles`,
+      ],
+      challenge: `Design and implement a small system that correctly applies ${t} across 3+ classes, with documentation explaining each design decision`,
+    };
+  }
+  if (/\b(exception|error|try|catch|throw|handling|validation)\b/.test(tl)) {
+    return {
+      practice: [
+        `Write code that properly handles 3 different types of errors using try/catch`,
+        `Explain the difference between checked and unchecked exceptions with examples`,
+        `Design an error-handling strategy for a file processing pipeline`,
+      ],
+      challenge: `Build a robust error-handling system with custom exception types, retry logic, and graceful degradation`,
+    };
+  }
+  if (/\b(concurrency|thread|mutex|lock|deadlock|synchron|parallel|atomic)\b/.test(tl)) {
+    return {
+      practice: [
+        `Write a concurrent program that demonstrates ${t} — identify where race conditions could occur`,
+        `Explain a real-world scenario where ${t} is necessary and how to implement it safely`,
+        `Debug a code snippet with a concurrency bug related to ${t}`,
+      ],
+      challenge: `Design and implement a thread-safe data structure that uses ${t} correctly`,
+    };
+  }
+
+  // ── Science: explain, describe, analyze ──
+  if (/\b(physics|force|mass|energy|momentum|velocity|gravity|newton|thermodynamics|electromagnet|quantum)\b/.test(tl)) {
+    return {
+      practice: [
+        `Explain ${t} with a concrete real-world example, including the relevant formula and units`,
+        `Solve a numerical problem involving ${t} — show all steps and check your answer`,
+        `Describe an experiment that demonstrates ${t}`,
+      ],
+      challenge: `Analyze a real-world physical system using ${t}: set up the model, solve it, and discuss assumptions and limitations`,
+    };
+  }
+  if (/\b(chemistry|molecule|atom|reaction|bond|element|compound|organic|inorganic|solution|acid|base)\b/.test(tl)) {
+    return {
+      practice: [
+        `Describe ${t} at the molecular level, including diagrams of key structures`,
+        `Predict the outcome of a chemical process involving ${t} and explain your reasoning`,
+        `Connect ${t} to a real-world application in medicine, industry, or the environment`,
+      ],
+      challenge: `Design a laboratory procedure or analysis that applies ${t}`,
+    };
+  }
+  if (/\b(biology|cell|dna|rna|protein|gene|nucleus|mitosis|meiosis|evolution|ecology|organism)\b/.test(tl)) {
+    return {
+      practice: [
+        `Describe ${t} with labeled diagrams and explain each component's role`,
+        `Explain how ${t} relates to health, disease, or environmental science`,
+        `Compare ${t} across different organisms or conditions`,
+      ],
+      challenge: `Analyze a biological research question related to ${t} using available data or literature`,
+    };
+  }
+  if (/\b(image|pixel|filter|convolution|kernel|blur|sharpen|edge|noise|histogram|segmentation|enhancement|restoration|compression|wavelet|fourier|dct|sampling|quantization|color model)\b/.test(tl)) {
+    return {
+      practice: [
+        `Explain ${t} at the mathematical level — what formula or operation is involved?`,
+        `Describe the effect of ${t} on an image using specific numerical examples`,
+        `Compare ${t} with an alternative approach — when would you choose one over the other?`,
+      ],
+      challenge: `Apply ${t} to a real image processing task: describe the input, the process, expected output, and potential artifacts`,
+    };
+  }
+  if (/\b(network|tcp|udp|ip|packet|protocol|socket|port|dns|http|osi|cloud|iaas|paas|saas|distributed|mapreduce|gossip|key.value|serverless|container|docker|kubernetes)\b/.test(tl)) {
+    return {
+      practice: [
+        `Explain ${t} with a sequence diagram or flowchart showing how it works step by step`,
+        `Compare ${t} with an alternative approach — what are the tradeoffs?`,
+        `Describe a real-world scenario where ${t} is used and why it was chosen`,
+      ],
+      challenge: `Design a system architecture that uses ${t} — explain your choices, draw the components, and discuss scalability`,
+    };
+  }
+
+  // ── Music ──
+  if (/\b(scale|chord|interval|note|pitch|harmony|melody|rhythm|tempo|key|major|minor|mode|arpeggio|cadence)\b/.test(tl)) {
+    return {
+      practice: [
+        `Play or sing ${t} slowly, then analyze the intervals between each note`,
+        `Write a short musical phrase that demonstrates ${t} in context`,
+        `Explain the theory behind ${t} — why does it sound the way it does?`,
+      ],
+      challenge: `Compose a short piece that prominently features ${t} and explain your compositional choices`,
+    };
+  }
+
+  // ── Language learning ──
+  if (/\b(grammar|syntax|tense|verb|noun|adjective|conjugat|declension|writing|essay|paragraph|thesis|vocabulary|word|phrase|idiom)\b/.test(tl)) {
+    return {
+      practice: [
+        `Write 5 original sentences that correctly use ${t}`,
+        `Identify and correct 3 errors related to ${t} in sample sentences`,
+        `Explain the rule behind ${t} with examples in both formal and informal contexts`,
+      ],
+      challenge: `Write a short paragraph or essay that naturally demonstrates mastery of ${t}`,
+    };
+  }
+
+  // ── Generic fallback: use the topic title to make specific problems ──
+  return {
+    practice: [
+      `Explain ${t} in your own words — what is it, why does it matter, and how does it work?`,
+      `Create a study note for ${t} with key definitions, 3 examples, and common pitfalls`,
+      `Apply ${t} to solve a concrete problem or answer a specific question`,
+    ],
+    challenge: `Write a comprehensive guide to ${t} that covers: definition, key concepts, examples, applications, common mistakes, and how it connects to the broader subject`,
+  };
 }
 
 /** Deterministic fallback parser: real sequencing, no AI required. */
