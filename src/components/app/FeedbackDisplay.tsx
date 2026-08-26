@@ -1,5 +1,4 @@
 import { MathText } from "@/components/MathText";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   BookOpenCheck,
@@ -10,7 +9,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import * as React from "react";
+import Markdown from "react-markdown";
+import * as React from "react"
 
 export interface Feedback {
   summary: string;
@@ -195,7 +195,14 @@ export function FeedbackDisplay({
           <Lightbulb className="size-3.5" /> Detailed explanation
         </p>
         <div className="rounded-xl border border-border/50 bg-card px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-          <MathText text={feedback.explanation} />
+          <Markdown components={{
+            p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+            strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+            h2: ({children}) => <h3 className="mt-3 mb-1.5 text-sm font-semibold text-foreground">{children}</h3>,
+            h3: ({children}) => <h4 className="mt-2 mb-1 text-xs font-semibold text-foreground">{children}</h4>,
+            ul: ({children}) => <ul className="my-1.5 list-disc pl-5 space-y-1">{children}</ul>,
+            li: ({children}) => <li className="text-sm">{children}</li>,
+          }}>{feedback.explanation}</Markdown>
         </div>
       </div>
 
@@ -206,7 +213,13 @@ export function FeedbackDisplay({
             <Sparkles className="size-3.5" /> Model answer
           </p>
           <div className="rounded-xl border border-chart-2/30 bg-chart-2/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-            <MathText text={feedback.improvedAnswer} />
+            <Markdown components={{
+              p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+              strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+              h2: ({children}) => <h3 className="mt-3 mb-1.5 text-sm font-semibold text-foreground">{children}</h3>,
+              ul: ({children}) => <ul className="my-1.5 list-disc pl-5 space-y-1">{children}</ul>,
+              li: ({children}) => <li className="text-sm">{children}</li>,
+            }}>{feedback.improvedAnswer}</Markdown>
           </div>
         </div>
       )}

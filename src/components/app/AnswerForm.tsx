@@ -17,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import * as React from "react";
-import { FeedbackDisplay, type Feedback } from "./FeedbackDisplay";
+import { FeedbackDisplay } from "./FeedbackDisplay";
 
 function ScorePill({ score }: { score: number }) {
   const color =
