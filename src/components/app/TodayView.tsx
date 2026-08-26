@@ -1,4 +1,5 @@
 import { Heatmap } from "@/components/app/Heatmap";
+import { ReviewTodayCard } from "@/components/app/ReviewTodayCard";
 import { TrendChart } from "@/components/app/TrendChart";
 import { TaskRow } from "@/components/app/TaskRow";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,17 @@ export default function TodayView() {
       <section className="flex flex-wrap items-center gap-2.5">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium">
           <Flame className="size-3.5 text-chart-1" />
-          {stats.streak > 0 ? `${stats.streak}-day streak` : "No streak yet — today counts"}
+          {stats.streak > 0 ? (
+            <>
+              <span className="text-base leading-none">🔥</span>
+              <span>{stats.streak}-day streak</span>
+              {stats.longestStreak > stats.streak && (
+                <span className="text-muted-foreground">· best: {stats.longestStreak}</span>
+              )}
+            </>
+          ) : (
+            <span>Start your streak today</span>
+          )}
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium">
           <Repeat2 className="size-3.5 text-chart-2" />
@@ -104,6 +115,27 @@ export default function TodayView() {
           {fmtHours(stats.totalHoursCompleted)} learned for keeps
         </span>
       </section>
+
+      {/* Review Today — prominent card for spaced repetition */}
+      {board.tasks.filter((t) => t.kind === "review" && t.status === "open").length > 0 && (
+        <ReviewTodayCard
+          reviews={board.tasks
+            .filter((t) => t.kind === "review" && t.status === "open")
+            .map((t) => ({
+              _id: t._id,
+              title: t.title,
+              hours: t.hours,
+              reviewStage: t.reviewStage,
+              planTitle: t.planTitle,
+              planAccent: t.planAccent,
+            }))}
+          onReviewAll={() => {
+            // Scroll to the first review task in the board
+            const firstReview = document.querySelector('[data-kind="review"]');
+            firstReview?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }}
+        />
+      )}
 
       {/* Progress: interactive heatmap + trend line, switchable */}
       <section>

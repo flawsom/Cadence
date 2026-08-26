@@ -201,12 +201,31 @@ export const getStats = query({
       cursor -= 86_400_000;
     }
 
+    // Longest streak ever — scan all completion days.
+    const sortedDays = [...hoursByDoneDay.entries()]
+      .filter(([, h]) => h > 0)
+      .sort(([a], [b]) => (a < b ? -1 : 1));
+    let longestStreak = 0;
+    let currentRun = 0;
+    let prevMs = 0;
+    for (const [dayKey] of sortedDays) {
+      const ms = dayKeyToUtcMs(dayKey);
+      if (prevMs > 0 && ms - prevMs === 86_400_000) {
+        currentRun++;
+      } else {
+        currentRun = 1;
+      }
+      if (currentRun > longestStreak) longestStreak = currentRun;
+      prevMs = ms;
+    }
+
     const reviewsDueToday = tasks.filter(
       (t) => t.kind === "review" && t.status === "open" && t.dayKey === args.todayKey,
     ).length;
 
     return {
       streak,
+      longestStreak,
       heatmap,
       reviewsDueToday,
       totalCompleted: tasks.filter((t) => t.status === "done").length,

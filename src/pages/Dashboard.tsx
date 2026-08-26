@@ -98,11 +98,20 @@ export default function Dashboard() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-3">
-          {stats && stats.streak > 0 && (
+          {stats && (
             <div className="flex items-center gap-2 rounded-2xl border border-primary/25 bg-secondary/70 px-3 py-2.5">
               <Flame className="size-4 shrink-0 text-chart-1" />
               <div className="text-xs leading-tight">
-                <span className="font-semibold">{stats.streak}-day streak</span>
+                {stats.streak > 0 ? (
+                  <>
+                    <span className="font-semibold">🔥 {stats.streak}-day streak</span>
+                    {stats.longestStreak > stats.streak && (
+                      <span className="ml-1 text-muted-foreground">· best: {stats.longestStreak}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="font-semibold">Start your streak today</span>
+                )}
                 <p className="text-muted-foreground">{fmtHours(stats.totalHoursCompleted)} logged in total</p>
               </div>
             </div>

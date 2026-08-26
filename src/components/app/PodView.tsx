@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { PodDigestCard } from "@/components/app/PodDigestCard";
 import { api } from "@/convex/_generated/api";
 import { fmtHours, prettyDate, todayISO } from "@/lib/planning";
 import { useMutation, useQuery } from "convex/react";
@@ -135,11 +136,22 @@ function PodDashboard({ pod }: { pod: Pod }) {
   const leavePod = useMutation(api.pods.leavePod);
   const todayKey = todayISO();
   const boards = useQuery(api.pods.podBoards, { todayKey });
+  const digest = useQuery(api.crons.latestDigest);
 
   return (
     <>
       <InviteBar name={pod.name} code={pod.code} />
       <CheckInComposer />
+      {digest && (
+        <PodDigestCard
+          digest={{
+            weekEnding: digest.weekEnding,
+            memberStats: digest.memberStats,
+            totalPodHours: digest.totalPodHours,
+            topPerformerName: digest.topPerformerName,
+          }}
+        />
+      )}
       {boards !== undefined && boards !== null && (
         <>
           <SubjectBoards boards={boards} />
