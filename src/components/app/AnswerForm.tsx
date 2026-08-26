@@ -56,18 +56,13 @@ export function AnswerForm({
         answer: answer.trim(),
       });
 
-      // Trigger AI evaluation
-      try {
-        await evaluateAnswer({
-          answerId,
-          problemText,
-          userAnswer: answer.trim(),
-          topicContext,
-        });
-      } catch {
-        // LLM might be offline — mark error but don't break the UX
-        setError("AI evaluation unavailable — your answer was saved. Try again when the LLM is running.");
-      }
+      // Trigger evaluation — LLM when available, offline engine guaranteed
+      await evaluateAnswer({
+        answerId,
+        problemText,
+        userAnswer: answer.trim(),
+        topicContext,
+      });
 
       setAnswer("");
     } catch (err) {

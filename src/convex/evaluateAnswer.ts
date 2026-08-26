@@ -64,7 +64,7 @@ export const evaluate = action({
       .filter(Boolean)
       .join("\n");
 
-    let response: Response;
+    let response: Response | null = null;
     try {
       response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
@@ -87,10 +87,11 @@ export const evaluate = action({
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch {
-      throw new Error("NO_LLM");
+      // LLM unreachable — fall back to offline evaluator (never fails)
+      return fallbackOffline(ctx, args);
     }
 
-    if (!response.ok) throw new Error(`NO_LLM_${response.status}`);
+    if (!response.ok) return fallbackOffline(ctx, args);
 
     let content: string | undefined;
     try {
@@ -99,9 +100,10 @@ export const evaluate = action({
       };
       content = payload.choices?.[0]?.message?.content;
     } catch {
-      throw new Error("NO_LLM_MALFORMED");
+      // LLM response malformed — fall back to offline evaluator
+      return fallbackOffline(ctx, args);
     }
-    if (!content) throw new Error("NO_LLM_EMPTY");
+    if (!content) return fallbackOffline(ctx, args);
 
     // Tolerate models that wrap JSON in prose, code fences, or <think> blocks.
     let jsonStart = -1;
@@ -123,13 +125,13 @@ export const evaluate = action({
         if (depth === 0 && jsonStart !== -1) { jsonEnd = i; break; }
       }
     }
-    if (jsonStart === -1 || jsonEnd <= jsonStart) throw new Error("NO_LLM_NOT_JSON");
+    if (jsonStart === -1 || jsonEnd <= jsonStart) return fallbackOffline(ctx, args);
 
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(content.slice(jsonStart, jsonEnd + 1));
     } catch {
-      throw new Error("NO_LLM_NOT_JSON");
+      return fallbackOffline(ctx, args);
     }
 
     // Normalize the response into our schema shape.
@@ -163,3 +165,33 @@ export const evaluate = action({
     return { score, feedback };
   },
 });
+
+// ── Guaranteed fallback — never fails ─────────────────────────────────
+
+async function fallbackOffline(
+  ctx: any,
+  args: {
+    answerId: any;
+    problemText: string;
+    userAnswer: string;
+  },
+) {
+  const { evaluateOffline } = await import("./evaluateOffline");
+  const result = evaluateOffline(args.problemText, args.userAnswer);
+
+  await ctx.runMutation(api.answers.saveEvaluation, {
+    answerId: args.answerId,
+    score: result.score,
+    feedback: {
+      summary: result.summary,
+      strengths: result.strengths,
+      weaknesses: result.weaknesses,
+      improvedAnswer: result.improvedAnswer,
+      explanation: result.explanation,
+      diagram: result.diagram,
+      equations: result.equations,
+    },
+  });
+
+  return { score: result.score, feedback: result };
+}
