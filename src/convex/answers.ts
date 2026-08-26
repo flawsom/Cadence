@@ -106,6 +106,34 @@ export const byTask = query({
   },
 });
 
+// ── Get all answers for a specific problem (history + comparison) ─────
+
+export const byTaskAndProblem = query({
+  args: { taskId: v.id("tasks"), problemIndex: v.number() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const answers = await ctx.db
+      .query("answers")
+      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    return answers
+      .filter((a) => a.userId === userId && a.problemIndex === args.problemIndex)
+      .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+      .map((a) => ({
+        _id: a._id,
+        answer: a.answer,
+        score: a.score,
+        feedback: a.feedback,
+        status: a.status,
+        createdAt: a.createdAt,
+        evaluatedAt: a.evaluatedAt,
+      }));
+  },
+});
+
 // ── Get user's answer history across all tasks ────────────────────────
 
 export const userHistory = query({

@@ -316,52 +316,131 @@ function extractEquations(problem: string): string[] | undefined {
 // ── Diagram generator ──────────────────────────────────────────────────
 
 function generateConceptDiagram(problem: string): string | undefined {
-  const topic = problem.toLowerCase();
+  const t = problem.toLowerCase();
 
-  if (/\b(flow|process|algorithm|step|workflow|pipeline)\b/.test(topic)) {
-    return `flowchart TD
-    A[Start] --> B[Understand the Problem]
-    B --> C[Identify Key Concepts]
-    C --> D[Apply Principles]
-    D --> E[Verify Solution]
-    E --> F[Refine & Document]`;
+  // ── Programming / CS ──────────────────────────────────────
+  if (/\b(linked list|node|pointer|next|prev)\b/.test(t)) {
+    return `graph LR\n    N1[Node A|data] -->|next| N2[Node B|data]\n    N2 -->|next| N3[Node C|data]\n    N3 -->|null| NULL((nil))\n    N1 -.->|prev| N0((head))\n    style N1 fill:#f96,stroke:#333\n    style N2 fill:#f96,stroke:#333\n    style N3 fill:#f96,stroke:#333`;
+  }
+  if (/\b(array|vector|list|index|element|subscript)\b/.test(t)) {
+    return `graph LR\n    A["arr[0]"] --- B["arr[1]"] --- C["arr[2]"] --- D["arr[3]"]\n    E["index"] -.-> A\n    style A fill:#9cf,stroke:#333\n    style B fill:#9cf,stroke:#333\n    style C fill:#9cf,stroke:#333\n    style D fill:#9cf,stroke:#333`;
+  }
+  if (/\b(stack|push|pop|lifo|top)\b/.test(t) && /\b(data structure|store|access|element)\b/.test(t)) {
+    return `graph TD\n    PUSH[Push] --> TOP[Top]\n    TOP --> S1[Element 3]\n    S1 --> S2[Element 2]\n    S2 --> S3[Element 1]\n    TOP --> POP[Pop]\n    style TOP fill:#f96,stroke:#333\n    style S1 fill:#ff9,stroke:#333\n    style S2 fill:#ff9,stroke:#333\n    style S3 fill:#ff9,stroke:#333`;
+  }
+  if (/\b(queue|enqueue|dequeue|fifo|front|rear)\b/.test(t) && /\b(data|structure|store|element)\b/.test(t)) {
+    return `graph LR\n    ENQ[Enqueue] --> F[Front]\n    F --> Q1[Item 1]\n    Q1 --> Q2[Item 2]\n    Q2 --> Q3[Item 3]\n    Q3 --> R[Rear]\n    R --> DEQ[Dequeue]\n    style F fill:#9cf,stroke:#333\n    style R fill:#f96,stroke:#333`;
+  }
+  if (/\b(tree|binary|bst|node|child|parent|root|leaf|height|depth)\b/.test(t) && /\b(data|structure|algorithm|traversal)\b/.test(t)) {
+    return `graph TD\n    R[Root] --> L[Left Child]\n    R --> RI[Right Child]\n    L --> LL[Leaf]\n    L --> LR[Leaf]\n    RI --> RL[Leaf]\n    RI --> RR[Leaf]\n    style R fill:#f96,stroke:#333\n    style LL fill:#9f9,stroke:#333\n    style LR fill:#9f9,stroke:#333\n    style RL fill:#9f9,stroke:#333\n    style RR fill:#9f9,stroke:#333`;
+  }
+  if (/\b(hash|hashing|bucket|collision|key.?value|dictionary|map)\b/.test(t)) {
+    return `graph LR\n    KEY[Key] --> HASH[Hash Function]\n    HASH --> B0[Bucket 0]\n    HASH --> B1[Bucket 1]\n    HASH --> B2[Bucket 2]\n    B0 --> V0[Value]\n    B1 --> V1[Value]\n    B2 --> V2[Value]\n    style HASH fill:#f96,stroke:#333`;
+  }
+  if (/\b(class|object|instance|method|inheritance|polymorphism|encapsulation|interface|abstract|override|overload)\b/.test(t)) {
+    return `classDiagram\n    class Animal {\n        +String name\n        +speak()\n    }\n    class Dog {\n        +fetch()\n    }\n    class Cat {\n        +purr()\n    }\n    Animal <|-- Dog\n    Animal <|-- Cat\n    style Animal fill:#f96,stroke:#333\n    style Dog fill:#9cf,stroke:#333\n    style Cat fill:#9f9,stroke:#333`;
+  }
+  if (/\b(recursion|recursive|base case|divide|conquer|merge)\b/.test(t)) {
+    return `flowchart TD\n    F[fact 5] -->|calls| F4[fact 4]\n    F4 -->|calls| F3[fact 3]\n    F3 -->|calls| F2[fact 2]\n    F2 -->|calls| F1[fact 1]\n    F1 --> BASE[Base Case: returns 1]\n    F2 --> R2[returns 2]\n    F3 --> R3[returns 6]\n    F4 --> R4[returns 24]\n    F --> R5[returns 120]\n    style BASE fill:#f96,stroke:#333`;
+  }
+  if (/\b(sort|bubble|merge|quick|heap|insertion|selection|comparison)\b/.test(t)) {
+    return `flowchart TD\n    A[Unsorted Array] --> B{Choose Pivot}\n    B -->|less than| C[Left Partition]\n    B -->|greater than| D[Right Partition]\n    C --> E[Recurse Left]\n    D --> F[Recurse Right]\n    E --> G[Merge/Combine]\n    F --> G\n    G --> H[Sorted Array]\n    style A fill:#f99,stroke:#333\n    style H fill:#9f9,stroke:#333`;
+  }
+  if (/\b(api|endpoint|rest|http|request|response|status code|method|url|json)\b/.test(t)) {
+    return `sequenceDiagram\n    participant C as Client\n    participant S as Server\n    participant D as Database\n    C->>S: GET /api/resource\n    S->>D: SELECT * FROM table\n    D-->>S: Result set\n    S-->>C: 200 OK (JSON)\n    C->>S: POST /api/resource\n    S->>D: INSERT INTO table\n    D-->>S: Confirmation\n    S-->>C: 201 Created`;
+  }
+  if (/\b(algorithm|complexity|time|space|big.?o|asymptotic|efficiency)\b/.test(t)) {
+    return `graph LR\n    O1["O(1)"] --> OLG["O(log n)"] --> ON["O(n)"] --> ONLOGN["O(n log n)"] --> ON2["O(n²)"] --> O2N["O(2ⁿ)"]\n    style O1 fill:#9f9,stroke:#333\n    style OLG fill:#9f9,stroke:#333\n    style ON fill:#ff9,stroke:#333\n    style ONLOGN fill:#ff9,stroke:#333\n    style ON2 fill:#f99,stroke:#333\n    style O2N fill:#f66,stroke:#333`;
+  }
+  if (/\b(database|sql|query|table|column|row|join|index|normali)\b/.test(t)) {
+    return `erDiagram\n    USER ||--o{ ORDER : places\n    ORDER ||--|{ ORDER_ITEM : contains\n    PRODUCT ||--o{ ORDER_ITEM : "is in"\n    USER {\n        int id PK\n        string name\n    }\n    ORDER {\n        int id PK\n        date created\n    }`;
+  }
+  if (/\b(tcp|udp|packet|socket|port|dns|osi)\b/.test(t)) {
+    if (/\b(tcp|udp)\b/.test(t)) {
+      return `graph TD\n    TCP[TCP] --> RELIABLE[Reliable Delivery]\n    TCP --> ORDERED[Ordered Packets]\n    TCP --> CONN[Connection-Oriented]\n    TCP --> FLOW[Flow Control]\n    UDP[UDP] --> FAST[Fast / Low Overhead]\n    UDP --> UNORDERED[No Order Guarantee]\n    UDP --> NO_CONN[Connectionless]\n    UDP --> BROADCAST[Broadcast Support]\n    TCP -.->|best for: web, email, file transfer| USE1[HTTP, SMTP, FTP]\n    UDP -.->|best for: gaming, streaming, DNS| USE2[VoIP, DNS, Video]\n    style TCP fill:#9cf,stroke:#333\n    style UDP fill:#f96,stroke:#333`;
+    }
+    return `graph TD\n    APP[Application Layer] --> TRAN[Transport Layer]\n    TRAN --> NET[Network Layer]\n    NET --> LINK[Data Link Layer]\n    LINK --> PHY[Physical Layer]\n    PHY -.->|signals| REMOTE((Remote))\n    style APP fill:#9cf,stroke:#333\n    style TRAN fill:#9f9,stroke:#333\n    style NET fill:#ff9,stroke:#333\n    style LINK fill:#f96,stroke:#333\n    style PHY fill:#f99,stroke:#333`;
+  }
+  if (/\b(cloud|aws|azure|gcp|serverless|lambda|instance|container|docker|kubernetes|s3|ec2)\b/.test(t)) {
+    return `graph TD\n    USER[User] --> CDN[CDN/Edge]\n    CDN --> APIGW[API Gateway]\n    APIGW --> LAMBDA[Serverless Function]\n    LAMBDA --> DB[(Database)]\n    LAMBDA --> S3[Object Storage]\n    LAMBDA --> Q[Message Queue]\n    Q --> WORKER[Background Worker]\n    WORKER --> DB\n    style LAMBDA fill:#f96,stroke:#333`;
+  }
+  if (/\b(security|encryption|hash|certificate|ssl|tls|authentication|authorization|token|jwt)\b/.test(t)) {
+    return `sequenceDiagram\n    participant C as Client\n    participant S as Server\n    participant CA as Auth Provider\n    C->>S: Login Request\n    S->>CA: Verify Credentials\n    CA-->>S: JWT Token\n    S-->>C: Token + Refresh Token\n    C->>S: API Request + Bearer Token\n    S->>S: Verify JWT\n    S-->>C: 200 OK (Protected Data)`;
+  }
+  if (/\b(concurrency|thread|mutex|lock|deadlock|race condition|synchron|parallel|atomic)\b/.test(t)) {
+    return `sequenceDiagram\n    participant T1 as Thread 1\n    participant L as Lock/Mutex\n    participant T2 as Thread 2\n    T1->>L: Acquire Lock\n    L-->>T1: Granted\n    T1->>T1: Critical Section\n    T2->>L: Acquire Lock\n    L-->>T2: Blocked\n    T1->>L: Release Lock\n    L-->>T2: Granted\n    T2->>T2: Critical Section\n    T2->>L: Release Lock`;
+  }
+  if (/\b(regular expression|regex|pattern|match|capture|group)\b/.test(t)) {
+    return `graph LR\n    INPUT[Input String] --> REGEX[Regex Pattern]\n    REGEX -->|match| MATCH[Match Found]\n    REGEX -->|no match| NO_MATCH[No Match]\n    REGEX -->|group 1| G1[Captured Group 1]\n    REGEX -->|group 2| G2[Captured Group 2]\n    style MATCH fill:#9f9,stroke:#333\n    style NO_MATCH fill:#f99,stroke:#333`;
+  }
+  if (/\b(design pattern|singleton|factory|observer|strategy|decorator|adapter|proxy|builder|command|state)\b/.test(t)) {
+    return `classDiagram\n    class Context {\n        -Strategy strategy\n        +setStrategy(Strategy)\n        +executeStrategy()\n    }\n    class Strategy {\n        <<interface>>\n        +execute()\n    }\n    class ConcreteA {\n        +execute()\n    }\n    class ConcreteB {\n        +execute()\n    }\n    Context o-- Strategy\n    Strategy <|.. ConcreteA\n    Strategy <|.. ConcreteB`;
   }
 
-  if (/\b(hierarchy|tree|structure|classification|taxonomy|inheritance)\b/.test(topic)) {
-    return `graph TD
-    A[Root Concept] --> B[Sub-concept 1]
-    A --> C[Sub-concept 2]
-    B --> D[Detail 1]
-    B --> E[Detail 2]
-    C --> F[Detail 3]
-    C --> G[Detail 4]`;
+  // ── Math ───────────────────────────────────────────────────
+  if (/\b(probability|probability distribution|bayes|conditional|independent|sample space)\b/.test(t)) {
+    return `graph TD\n    S[Sample Space] --> E1[Event A]\n    S --> E2[Event B]\n    E1 -->|A AND B| BOTH[Intersection]\n    E2 --> BOTH\n    E1 -->|A OR B| UNION[Union]\n    E2 --> UNION\n    BOTH --> P["P(A∩B) = P(A)·P(B) if independent"]\n    UNION --> PU["P(A∪B) = P(A) + P(B) - P(A∩B)"]\n    style BOTH fill:#f96,stroke:#333\n    style UNION fill:#9cf,stroke:#333`;
+  }
+  if (/\b(statistics|mean|median|mode|variance|standard deviation|regression|correlation|confidence interval)\b/.test(t)) {
+    return `graph TD\n    DATA[Raw Data] --> DESC[Descriptive Stats]\n    DATA --> INFER[Inferential Stats]\n    DESC --> M[Mean / Median / Mode]\n    DESC --> V[Variance / Std Dev]\n    DESC --> R[Range / IQR]\n    INFER --> CI[Confidence Intervals]\n    INFER --> HT[Hypothesis Testing]\n    INFER --> RE[Regression Analysis]\n    style DATA fill:#ff9,stroke:#333`;
+  }
+  if (/\b(integral|integration|definite|indefinite|antiderivative|area under|riemann)\b/.test(t)) {
+    return `graph LR\n    F["f(x)"] -->|integrate| G["F(x) + C"]\n    G -->|evaluate| AREA["Area under curve"]\n    AREA --> DEF["∫ₐᵇ f(x)dx = F(b) - F(a)"]\n    style F fill:#9cf,stroke:#333\n    style DEF fill:#f96,stroke:#333`;
+  }
+  if (/\b(derivative|differentiation|chain rule|product rule|slope|rate of change|tangent)\b/.test(t)) {
+    return `graph LR\n    F["f(x)"] -->|differentiate| FP["f'(x)"]\n    FP --> SLOPE[Slope at point]\n    FP --> RATE[Rate of change]\n    FP --> TAN[Tangent line]\n    CHAIN[Chain Rule:\n"(f∘g)' = f'(g)·g'"] -.-> FP\n    style FP fill:#f96,stroke:#333`;
+  }
+  if (/\b(matrix|matrices|determinant|eigenvalue|eigenvector|transpose|inverse|linear transformation)\b/.test(t)) {
+    return `graph LR\n    A[Matrix A] --> DET[Determinant]\n    A --> INV[Inverse A⁻¹]\n    A --> EIG[Eigenvalues]\n    DET -->|det≠0| CAN_INV[Invertible]\n    DET -->|det=0| SING[Singular]\n    EIG --> DECOMPOSE[Diagonalization]\n    style A fill:#9cf,stroke:#333\n    style DET fill:#ff9,stroke:#333`;
+  }
+  if (/\b(laplace|fourier|transform|frequency|domain|signal|spectrum)\b/.test(t)) {
+    return `graph LR\n    TIME[Time Domain f t] -->|Transform| FREQ[Frequency Domain F omega]\n    FREQ -->|Inverse Transform| TIME\n    TIME --> SIGNAL[Continuous Signal]\n    FREQ --> SPECT[Frequency Spectrum]\n    style TIME fill:#9cf,stroke:#333\n    style FREQ fill:#f96,stroke:#333`;
+  }
+  if (/\b(equation|solve|quadratic|polynomial|linear system|cramer)\b/.test(t)) {
+    return `flowchart TD\n    PROB[Problem] --> TYPE{Type?}\n    TYPE -->|Linear| LIN["ax + b = 0"]\n    TYPE -->|Quadratic| QUAD["ax² + bx + c = 0"]\n    TYPE -->|System| SYS[Matrix form AX=B]\n    LIN --> SOL1["x = -b/a"]\n    QUAD --> SOL2["x = (-b ± √(b²-4ac)) / 2a"]\n    SYS --> SOL3["X = A⁻¹B"]\n    style SOL1 fill:#9f9,stroke:#333\n    style SOL2 fill:#f96,stroke:#333\n    style SOL3 fill:#9cf,stroke:#333`;
   }
 
-  if (/\b(relationship|connect|compare|contrast|versus|difference)\b/.test(topic)) {
-    return `graph LR
-    A[Concept A] ---|shared| B[Concept B]
-    A ---|unique trait 1| C[Aspect 1]
-    B ---|unique trait 2| D[Aspect 2]
-    C --- E[Outcome]
-    D --- E`;
+  // ── Science / Engineering ──────────────────────────────────
+  if (/\b(physics|force|mass|acceleration|energy|momentum|velocity|gravity|newton)\b/.test(t)) {
+    return `graph TD\n    F[Force F] -->|F=ma| A[Acceleration]\n    M[Mass m] --> F\n    A --> V[Velocity]\n    V -->|integrate| X[Displacement]\n    KE["KE = ½mv²"] -.-> ENERGY[Energy]\n    PE["PE = mgh"] -.-> ENERGY\n    style F fill:#f96,stroke:#333\n    style ENERGY fill:#9f9,stroke:#333`;
+  }
+  if (/\b(chemistry|bond|reaction|molecule|atom|element|compound|organic|inorganic)\b/.test(t)) {
+    return `graph TD\n    A[Atom] -->|covalent bond| M[Molecule]\n    A -->|ionic bond| ION[Ionic Compound]\n    A -->|metallic bond| MET[Metallic Structure]\n    M --> COMP1[Compound A]\n    M --> COMP2[Compound B]\n    COMP1 -->|reacts with| PROD[Products]\n    COMP2 --> PROD\n    style A fill:#f96,stroke:#333\n    style PROD fill:#9f9,stroke:#333`;
+  }
+  if (/\b(biology|cell|dna|rna|protein|gene|nucleus|mitosis|meiosis|evolution)\b/.test(t)) {
+    return `graph TD\n    DNA[DNA] -->|transcription| RNA[mRNA]\n    RNA -->|translation| PROTEIN[Protein]\n    PROTEIN --> FUNCTION[Cell Function]\n    DNA -->|replication| DNA2[Copy DNA]\n    DNA --> MUTATION[Mutation]\n    MUTATION -->|natural selection| EVOLUTION[Evolution]\n    style DNA fill:#9cf,stroke:#333\n    style PROTEIN fill:#9f9,stroke:#333`;
+  }
+  if (/\b(circuit|resistor|capacitor|voltage|current|ohm|kirchhoff|ac|dc|transistor|diode)\b/.test(t)) {
+    return `graph TD\n    V[Voltage Source] --> R[Resistor]\n    R --> C[Capacitor]\n    C --> GND[Ground]\n    V --> I["I = V/R (Ohm's Law)"]\n    R --> POWER["P = IV = I²R"]\n    style V fill:#ff9,stroke:#333\n    style I fill:#f96,stroke:#333`;
   }
 
-  if (/\b(cycle|loop|iteration|recursive|feedback)\b/.test(topic)) {
-    return `graph TD
-    A[Input] --> B[Process]
-    B --> C[Evaluate]
-    C -->|Need more| B
-    C -->|Complete| D[Output]`;
+  // ── Image Processing / Signal Processing ───────────────────
+  if (/\b(image|pixel|filter|convolution|kernel|blur|sharpen|edge detection|noise|histogram)\b/.test(t)) {
+    return `graph LR\n    IMG[Original Image] --> PREPROC[Preprocessing]\n    PREPROC --> ENHANCE[Enhancement]\n    ENHANCE --> FEATURE[Feature Extraction]\n    FEATURE --> SEGMENT[Segmentation]\n    SEGMENT --> CLASS[Classification]\n    FILTER[Convolution Kernel] -.-> ENHANCE\n    style IMG fill:#9cf,stroke:#333\n    style FILTER fill:#ff9,stroke:#333`;
   }
 
-  return `graph TD
-    A[${topic.slice(0, 30)}] --> B[Core Principles]
-    A --> C[Key Applications]
-    A --> D[Related Concepts]
-    B --> E[Fundamentals]
-    B --> F[Advanced Theory]
-    C --> G[Real-world Use Cases]
-    C --> H[Best Practices]`;
+  // ── Language Learning ──────────────────────────────────────
+  if (/\b(grammar|syntax|tense|verb|noun|adjective|conjugat|declension|sentence structure)\b/.test(t)) {
+    return `graph TD\n    S[Sentence] --> NP[Noun Phrase]\n    S --> VP[Verb Phrase]\n    NP --> DET[Determiner]\n    NP --> N[Noun]\n    VP --> V[Verb]\n    VP --> OBJ[Object]\n    VP --> ADV[Adverb]\n    style S fill:#f96,stroke:#333`;
+  }
+  if (/\b(vocabulary|word|phrase|idiom|expression|meaning|definition)\b/.test(t)) {
+    return `graph TD\n    WORD[New Word] --> DEF[Definition]\n    WORD --> EX[Example Sentence]\n    WORD --> SYN[Synonyms]\n    WORD --> ANT[Antonyms]\n    WORD --> CONTEXT[Usage Context]\n    CONTEXT --> FORMAL[Formal]\n    CONTEXT --> CASUAL[Casual]\n    style WORD fill:#f96,stroke:#333`;
+  }
+  if (/\b(listening|speaking|pronunciation|accent|fluency|conversation)\b/.test(t)) {
+    return `graph TD\n    HEAR[Listen to Audio] --> REPEAT[Repeat / Shadow]\n    RECORD[Record Yourself] --> COMPARE[Compare with Source]\n    REPEAT --> COMPARE\n    COMPARE --> IDENTIFY[Identify Gaps]\n    IDENTIFY --> PRACTICE[Targeted Practice]\n    PRACTICE --> FLUENCY[Improved Fluency]\n    style HEAR fill:#9cf,stroke:#333\n    style FLUENCY fill:#9f9,stroke:#333`;
+  }
+  if (/\b(writing|essay|paragraph|thesis|argument|rhetoric|persuasion)\b/.test(t)) {
+    return `flowchart TD\n    TOPIC[Choose Topic] --> THESIS[Write Thesis Statement]\n    THESIS --> OUTLINE[Create Outline]\n    OUTLINE --> INTRO[Introduction]\n    INTRO --> BODY[Body Paragraphs]\n    BODY --> EVIDENCE[Support with Evidence]\n    EVIDENCE --> CONCLUSION[Conclusion]\n    CONCLUSION --> REVISE[Revise & Edit]\n    style THESIS fill:#f96,stroke:#333\n    style REVISE fill:#9f9,stroke:#333`;
+  }
+
+  // ── Music ──────────────────────────────────────────────────
+  if (/\b(scale|chord|interval|note|pitch|harmony|melody|rhythm|tempo|key|major|minor)\b/.test(t)) {
+    return `graph TD\n    ROOT[Root Note] --> MAJOR[Major: W W H W W W H]\n    ROOT --> MINOR[Minor: W H W W H W W]\n    ROOT --> PENTA[Pentatonic: 5 notes]\n    MAJOR --> CHORD_T[Major Triad: 1 3 5]\n    MINOR --> CHORD_M[Minor Triad: 1 ♭3 5]\n    CHORD_T --> PROG[Chord Progression]\n    CHORD_M --> PROG\n    style ROOT fill:#f96,stroke:#333`;
+  }
+
+  // ── Generic concept map (fallback) ─────────────────────────
+  const shortTopic = t.slice(0, 30);
+  return `graph TD\n    A["${shortTopic}"] --> B[Core Principles]\n    A --> C[Key Applications]\n    A --> D[Related Concepts]\n    B --> E[Fundamentals]\n    B --> F[Advanced Theory]\n    C --> G[Real-world Examples]\n    C --> H[Best Practices]\n    D --> I[Prerequisites]\n    D --> J[Next Steps]`;
 }
 
 // ── Main export ────────────────────────────────────────────────────────
