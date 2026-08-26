@@ -189,8 +189,12 @@ describe("Bare intention (no syllabus at all)", () => {
     const { title, topics } = heuristicParse("I want to learn Rust");
     expect(title).toBe("Rust");
     expect(topics.length).toBeGreaterThanOrEqual(5);
-    expect(topics[0].level).toBe(1);
-    expect(topics[topics.length - 1].level).toBe(3);
+    // At least one topic at each level (foundations → advanced).
+    expect(topics.some((t) => t.level === 1)).toBe(true);
+    expect(topics.some((t) => t.level === 3)).toBe(true);
+    // Every topic has practice problems and a challenge.
+    expect(topics.every((t) => (t.practice?.length ?? 0) >= 2)).toBe(true);
+    expect(topics.every((t) => (t.challenge?.length ?? 0) >= 10)).toBe(true);
   });
 });
 

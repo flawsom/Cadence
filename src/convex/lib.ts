@@ -1,19 +1,32 @@
 // Shared server-side helpers for the Cadence engine.
 // Pure TypeScript — safe to import from any Convex function.
 
-export type ParsedTopic = { title: string; hours: number; level: number };
+export type ParsedTopic = {
+  title: string;
+  hours: number;
+  level: number;
+  practice?: string[];
+  challenge?: string;
+};
 
 /**
  * System prompt for AI-assisted ingestion. Works with any OpenAI-compatible
  * endpoint — including a fully local Ollama / llama.cpp / LM Studio server.
  */
 export const SYLLABUS_SYSTEM_PROMPT =
-  "You are Cadence's curriculum planner. From the user's syllabus text or subject description, produce a JSON object: " +
-  '{"title": string (short plan name), "topics": [{"title": string, "hours": number, "level": number}]}. ' +
-  "Order topics fundamentals-first and build toward advanced material (never document order for its own sake). " +
-  "hours is focused study time per topic, between 0.5 and 6, realistic for a diligent human. " +
-  "level is 1 (foundations), 2 (core), or 3 (advanced). Produce between 5 and 24 topics. " +
-  'When a topic involves mathematical notation, write it in LaTeX wrapped in $ signs — for example "Dirac delta function $\\\\delta(t)$", "$2\\\\pi$ periodic functions", "solve $\\\\nabla^2 u = 0$". Return only JSON.';
+  "You are Cadence's curriculum planner. From the user's syllabus text or a simple topic name (like \"python\" or \"machine learning\"), produce a JSON object: " +
+  '{"title": string (short plan name), "topics": [{"title": string, "hours": number, "level": number, "practice": string[], "challenge": string}]}.\n\n' +
+  "RULES:\n" +
+  "1. If the user gives ONLY a topic/language name (no syllabus), assume they know NOTHING. Start from absolute basics: what it is, core vocabulary, syntax, first principles. Build through intermediate to advanced mastery.\n" +
+  "2. Order topics fundamentals-first, never document order.\n" +
+  "3. hours = focused study time per topic, between 0.5 and 6, realistic for a diligent human.\n" +
+  "4. level = 1 (foundations), 2 (core), or 3 (advanced/mastery).\n" +
+  "5. Produce between 8 and 30 topics for bare-topic inputs, 5–24 for full syllabi.\n" +
+  "6. practice = 2–4 concrete practice problems the learner should solve AFTER studying this topic. Be specific: write actual problem statements, not vague descriptions. Example: \"Write a function that finds the longest common subsequence of two strings\".\n" +
+  "7. challenge = ONE hard, non-trivial problem that tests deep mastery of this topic. It should be solvable but require real thought. Example: \"Implement a red-black tree with insert, delete, and rebalance operations from scratch\".\n" +
+  "8. For mathematical notation use LaTeX in $ signs: $\\delta(t)$, $2\\pi$, $\\nabla^2 u = 0$.\n" +
+  "9. For language/framework topics, include practice with increasing difficulty: simple scripts → data structures → algorithms → real-world projects.\n" +
+  "10. Return ONLY valid JSON, no commentary.";
 
 /** Normalizes raw model output into safe, bounded ParsedTopics. */
 export function normalizeTopics(input: unknown): ParsedTopic[] {
@@ -24,7 +37,16 @@ export function normalizeTopics(input: unknown): ParsedTopic[] {
       const title = String(t?.title ?? "").trim().slice(0, 120);
       const hours = Math.min(8, Math.max(0.5, Math.round(Number(t?.hours ?? 2) * 4) / 4));
       const level = Math.min(3, Math.max(1, Math.round(Number(t?.level ?? 2))));
-      return { title, hours, level };
+      // Practice problems: array of specific problem statements.
+      const practice = Array.isArray(t?.practice)
+        ? (t.practice as unknown[])
+            .map((p) => String(p ?? "").trim().slice(0, 200))
+            .filter((p) => p.length >= 5)
+            .slice(0, 5)
+        : [];
+      // Challenge problem: one hard mastery-level problem.
+      const challenge = String(t?.challenge ?? "").trim().slice(0, 300);
+      return { title, hours, level, practice, challenge };
     })
     .filter((t) => t.title.length > 1)
     .slice(0, 40);
@@ -357,7 +379,8 @@ export function heuristicParse(raw: string): {
   const unique = collected;
 
   if (unique.length < 3) {
-    // Single-subject mode: build a genuine fundamentals-to-advanced scaffold.
+    // Single-subject mode: build a genuine fundamentals-to-advanced scaffold
+    // with specific practice problems and a capstone challenge per topic.
     const subject =
       cleaned
         .split("\n")[0]
@@ -371,14 +394,88 @@ export function heuristicParse(raw: string): {
       "your new subject";
     const s = subject.slice(0, 60);
     const cap = s.charAt(0).toUpperCase() + s.slice(1);
+    const lower = s.toLowerCase();
     const scaffold: ParsedTopic[] = [
-      { title: `Orientation: what ${s} is and why it matters`, hours: 1.5 },
-      { title: `${cap} fundamentals — core vocabulary and first principles`, hours: 2.5 },
-      { title: `Guided practice: worked examples, step by step`, hours: 2.5 },
-      { title: `Core techniques you will reach for every time`, hours: 3 },
-      { title: `Common mistakes and how to untangle them`, hours: 2 },
-      { title: `Applied mini-project: put ${s} to work on something real`, hours: 3.5 },
-      { title: `Advanced patterns and where to go next`, hours: 2.5 },
+      {
+        title: `What is ${s}? — core concepts and vocabulary`,
+        hours: 1.5,
+        practice: [
+          `List 10 key terms in ${s} and write a one-sentence definition for each`,
+          `Explain ${s} to someone who has never heard of it in 3 paragraphs`,
+          `Draw a concept map connecting the 5 most important ideas in ${s}`,
+        ],
+        challenge: `Write a comprehensive FAQ document covering the 15 most common questions beginners ask about ${s}`,
+      },
+      {
+        title: `${cap} fundamentals — syntax, building blocks, first principles`,
+        hours: 2.5,
+        practice: [
+          `Set up a working ${s} environment from scratch and run a hello-world program`,
+          `Write 5 small programs/scripts that demonstrate the core building blocks of ${s}`,
+          `Reproduce 3 example programs from a beginner ${s} tutorial without looking at the solution`,
+        ],
+        challenge: `Build a complete, working mini-project from scratch that uses all the fundamental concepts of ${s} — no copy-pasting from tutorials`,
+      },
+      {
+        title: `Core data structures and algorithms in ${s}`,
+        hours: 3,
+        practice: [
+          `Implement arrays/lists, linked lists, stacks, and queues from scratch in ${s}`,
+          `Write search and sort algorithms and benchmark their performance`,
+          `Solve 5 LeetCode-style easy problems using the data structures you implemented`,
+        ],
+        challenge: `Design and implement a custom data structure (hash map or tree) with O(1) average-case operations, including collision handling and resizing`,
+      },
+      {
+        title: `Control flow, functions, and error handling mastery`,
+        hours: 2.5,
+        practice: [
+          `Write a program that uses loops, conditionals, and recursion to solve a real problem`,
+          `Refactor a long function into smaller, well-named functions with clear responsibilities`,
+          `Add proper error handling to a program that currently crashes on bad input`,
+        ],
+        challenge: `Build a recursive solver for a non-trivial problem (e.g., maze solver, expression evaluator, or backtracking puzzle) with proper error handling`,
+      },
+      {
+        title: `Intermediate patterns — OOP, modules, and code organization`,
+        hours: 3,
+        practice: [
+          `Design a class hierarchy for a real-world system (library, inventory, or game)`,
+          `Split a monolithic script into well-organized modules with clear interfaces`,
+          `Write unit tests for your modules and achieve at least 80% code coverage`,
+        ],
+        challenge: `Architect a multi-module application with proper separation of concerns: data layer, business logic, and interface — all with comprehensive tests`,
+      },
+      {
+        title: `Working with external libraries and APIs`,
+        hours: 2.5,
+        practice: [
+          `Install and use 3 popular ${s} libraries to solve different problems`,
+          `Fetch data from a public REST API and process/display the results`,
+          `Write a script that reads/writes files and processes real-world data (CSV, JSON, or XML)`,
+        ],
+        challenge: `Build a CLI tool or web scraper that fetches, parses, transforms, and stores data from multiple API sources with rate limiting and error recovery`,
+      },
+      {
+        title: `Advanced ${s} — performance, patterns, and best practices`,
+        hours: 3,
+        practice: [
+          `Profile a slow program, identify the bottleneck, and optimize it by at least 10x`,
+          `Implement a design pattern (observer, factory, or strategy) to solve a real problem`,
+          `Review and refactor existing code for readability, performance, and maintainability`,
+        ],
+        challenge: `Build a production-quality ${s} project that demonstrates advanced patterns: caching, lazy loading, concurrency, or plugin architecture — with documentation and benchmarks`,
+      },
+      {
+        title: `Applied capstone — real-world project from scratch`,
+        hours: 4,
+        practice: [
+          `Plan the architecture for a real-world ${s} project: database, API, and frontend`,
+          `Implement the core features with proper error handling, logging, and tests`,
+          `Deploy or package your project so others can use it`,
+        ],
+        challenge: `Design, implement, test, and document a complete ${s} application that solves a real problem you care about — something you could show in a portfolio or put on a resume`,
+      },
     ].map((t, i, arr) => ({
       ...t,
       level: levelFor(t.title, i / (arr.length - 1)),

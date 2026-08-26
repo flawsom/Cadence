@@ -15,7 +15,13 @@ export const createPlan = mutation({
   args: {
     title: v.optional(v.string()),
     rawInput: v.string(),
-    topics: v.optional(v.array(v.object({ title: v.string(), hours: v.number(), level: v.number() }))),
+    topics: v.optional(v.array(v.object({
+      title: v.string(),
+      hours: v.number(),
+      level: v.number(),
+      practice: v.optional(v.array(v.string())),
+      challenge: v.optional(v.string()),
+    }))),
     hoursPerDay: v.number(),
     targetDays: v.number(),
     startDayKey: v.string(),
@@ -43,7 +49,14 @@ export const createPlan = mutation({
       .sort((a, b) => a.level - b.level || a.i - b.i);
 
     // Split any topic bigger than a day into honest, labelled parts.
-    type Chunk = { title: string; hours: number; level: number; topicIdx: number };
+    type Chunk = {
+      title: string;
+      hours: number;
+      level: number;
+      topicIdx: number;
+      practice?: string[];
+      challenge?: string;
+    };
     const chunks: Chunk[] = [];
     for (const t of sequenced) {
       const h = Math.min(12, Math.max(0.25, t.hours));
@@ -55,6 +68,9 @@ export const createPlan = mutation({
           hours: partHours,
           level: t.level,
           topicIdx: t.i,
+          // Only attach practice/challenge to the last part (completion).
+          practice: p === parts - 1 ? t.practice : undefined,
+          challenge: p === parts - 1 ? t.challenge : undefined,
         });
       }
     }
@@ -141,6 +157,8 @@ export const createPlan = mutation({
         status: "open",
         carried: false,
         reviewSpawned: false,
+        practiceProblems: item.practice,
+        challengeProblem: item.challenge,
         createdAt: now,
       });
     }
@@ -260,6 +278,8 @@ export const detail = query({
             carried: t.carried,
             reviewStage: t.reviewStage,
             parentTopic: t.topicId ? topicTitle.get(t.topicId) : undefined,
+            practiceProblems: t.practiceProblems,
+            challengeProblem: t.challengeProblem,
           })),
       }));
 

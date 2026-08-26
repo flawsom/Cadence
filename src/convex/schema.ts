@@ -66,7 +66,9 @@ const schema = defineSchema(
       planId: v.id("plans"),
       topicId: v.optional(v.id("topics")),
       title: v.string(),
-      kind: v.union(v.literal("learn"), v.literal("review")),
+      kind: v.union(v.literal("learn"), v.literal("review"), v.literal("practice"), v.literal("challenge")),
+      practiceProblems: v.optional(v.array(v.string())),
+      challengeProblem: v.optional(v.string()),
       hours: v.number(),
       dayKey: v.string(), // YYYY-MM-DD (client-local)
       dayIndex: v.number(),
