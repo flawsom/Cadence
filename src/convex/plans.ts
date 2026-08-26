@@ -25,6 +25,7 @@ export const createPlan = mutation({
     hoursPerDay: v.number(),
     targetDays: v.number(),
     startDayKey: v.string(),
+    schedulingMode: v.optional(v.union(v.literal("parallel"), v.literal("sequential"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -75,13 +76,27 @@ export const createPlan = mutation({
       }
     }
 
-    // The daily budget is shared across ALL active plans — running two subjects
-    // never quietly doubles the user's day. Existing open work eats capacity;
-    // chunks that don't fit roll to the next day instead of overloading it.
+    // Scheduling mode:
+    //  - "parallel" (default): share daily budget across ALL active plans.
+    //  - "sequential": new plan starts after ALL existing open tasks are done.
+    const mode = args.schedulingMode ?? "parallel";
     const openTasks = await ctx.db
       .query("tasks")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+
+    let effectiveStartDayKey = args.startDayKey;
+    if (mode === "sequential" && openTasks.length > 0) {
+      // Find the latest dayKey among all open tasks, then start the day after.
+      const lastDay = openTasks
+        .filter((t) => t.status === "open")
+        .map((t) => t.dayKey)
+        .sort()[openTasks.filter((t) => t.status === "open").length - 1];
+      if (lastDay && lastDay >= args.startDayKey) {
+        effectiveStartDayKey = addDaysToDayKey(lastDay, 1);
+      }
+    }
+
     const loadByDay = new Map<string, number>();
     for (const t of openTasks) {
       if (t.status === "open") {
@@ -100,7 +115,7 @@ export const createPlan = mutation({
       let placedForChunk = false;
       while (!placedForChunk) {
         if (guard++ > 5000) throw new Error("Could not fit this plan into a schedule");
-        const key = addDaysToDayKey(args.startDayKey, offset);
+        const key = addDaysToDayKey(effectiveStartDayKey, offset);
         const existing = loadByDay.get(key) ?? 0;
         const remaining = Math.max(0, roundQuarter(hoursPerDay - existing));
         if (remaining >= chunk.hours - 0.001) {
@@ -151,7 +166,7 @@ export const createPlan = mutation({
         title: item.title,
         kind: "learn",
         hours: item.hours,
-        dayKey: addDaysToDayKey(args.startDayKey, item.dayOffset),
+        dayKey: addDaysToDayKey(effectiveStartDayKey, item.dayOffset),
         dayIndex: item.dayOffset + 1,
         order,
         status: "open",

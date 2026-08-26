@@ -42,6 +42,7 @@ export function NewPlanDialog({
   const [rawInput, setRawInput] = React.useState("");
   const [hoursPerDay, setHoursPerDay] = React.useState("2");
   const [targetDays, setTargetDays] = React.useState("30");
+  const [schedulingMode, setSchedulingMode] = React.useState<"parallel" | "sequential">("parallel");
   const [pending, setPending] = React.useState(false);
 
   const ingestSyllabus = useAction(api.ai.ingestSyllabus);
@@ -71,6 +72,7 @@ export function NewPlanDialog({
         hoursPerDay: Number(hoursPerDay),
         targetDays: Math.max(1, Math.min(366, Number(targetDays) || 30)),
         startDayKey: todayISO(),
+        schedulingMode,
       });
 
       toast.success(
@@ -148,6 +150,22 @@ export function NewPlanDialog({
                 onChange={(e) => setTargetDays(e.target.value)}
               />
             </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Scheduling</Label>
+            <Select value={schedulingMode} onValueChange={(v) => setSchedulingMode(v as "parallel" | "sequential")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="parallel">
+                  Parallel — run alongside existing plans (shared daily budget)
+                </SelectItem>
+                <SelectItem value="sequential">
+                  Sequential — starts after your current plans finish
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <p className="text-xs text-muted-foreground">
             If your material needs more days than you asked for, we&apos;ll say so —

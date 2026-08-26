@@ -139,11 +139,11 @@ export default function PlanDetailView() {
       <section>
         <h2 className="mb-3 font-display text-lg font-semibold">Day by day</h2>
         <div className="flex flex-col gap-4">
-          {detail.days.map((day) => (
+          {detail.days.map((day, idx) => (
             <div key={day.dayKey} className="rounded-3xl border border-border/60 bg-card p-4">
               <div className="mb-3 flex items-baseline justify-between px-1">
                 <h3 className="text-sm font-semibold">
-                  Day {day.dayIndex || ""}
+                  Day {idx + 1}
                   <span className="ml-2 font-normal text-muted-foreground">{prettyDate(day.dayKey)}</span>
                 </h3>
                 <span className="text-xs tabular-nums text-muted-foreground">
