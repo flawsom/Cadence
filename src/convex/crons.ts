@@ -8,12 +8,12 @@ import { buildBoards } from "./pods";
 const crons = cronJobs();
 
 /**
- * Weekly pod activity digest — runs every Monday at 9am UTC.
+ * Daily pod activity digest — runs every day at 9am UTC.
  */
-crons.cron("pod-digest", "0 9 * * 1", api.crons.generateWeekly);
+crons.cron("pod-digest", "0 9 * * *", api.crons.generateWeekly);
 
 /**
- * Generate and store a weekly digest for every active pod.
+ * Generate and store a daily digest for every active pod.
  * Called by the cron scheduler above, or manually via mutation.
  */
 export const generateWeekly = mutation({

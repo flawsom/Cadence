@@ -35,13 +35,12 @@ export function PodDigestCard({ digest }: { digest: DigestData }) {
         </div>
         <div>
           <h3 className="font-display text-base font-semibold">
-            Weekly Pod Digest
+            Daily Pod Digest
           </h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Week ending{" "}
             {new Date(digest.weekEnding + "T00:00:00").toLocaleDateString(
               "en-US",
-              { month: "short", day: "numeric" },
+              { weekday: "long", month: "short", day: "numeric" },
             )}
           </p>
         </div>
