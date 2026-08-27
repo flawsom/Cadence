@@ -1,18 +1,18 @@
 {
-  "name": "Cadence",
-  "short_name": "Cadence",
-  "description": "Turn any syllabus into a pace you can actually keep.",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "./logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
-}
+    "name": "Cadence",
+    "short_name": "Cadence",
+    "description": "Turn any syllabus into a pace you can actually keep.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#FDFCFA",
+    "theme_color": "#E85A2A",
+    "icons": [
+      {
+        "src": "./logo.svg",
+        "sizes": "any",
+        "type": "image/svg+xml",
+        "purpose": "any maskable"
+      }
+    ]
+  }
