@@ -20,6 +20,7 @@ import type * as lib from "../lib.js";
 import type * as mailer from "../mailer.js";
 import type * as plans from "../plans.js";
 import type * as pods from "../pods.js";
+import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 import type * as welcome from "../welcome.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   mailer: typeof mailer;
   plans: typeof plans;
   pods: typeof pods;
+  pushSubscriptions: typeof pushSubscriptions;
   tasks: typeof tasks;
   users: typeof users;
   welcome: typeof welcome;
