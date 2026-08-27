@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
+    // alias(libs.plugins.google.services) // Add when google-services.json is configured
     alias(libs.plugins.baselineprofile)
 }
 

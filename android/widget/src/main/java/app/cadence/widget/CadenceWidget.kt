@@ -34,16 +34,7 @@ import app.cadence.core.common.theme.StatusOnTrack
 
 class CadenceWidget : GlanceAppWidget() {
 
-    override val sizeMode = SizeMode.Responsive(
-        setOf(
-            2 to 1,  // Minimal: count + streak
-            3 to 1,  // + progress bar
-            4 to 2,  // + top 3 tasks
-        ).map { (w, h) -> SizeMode.WidthExactly(w.dp) to SizeMode.HeightExactly(h.dp) }
-            .first().let { _ ->
-                SizeMode.Single
-            }
-    )
+    override val sizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Fetch real data from local DB

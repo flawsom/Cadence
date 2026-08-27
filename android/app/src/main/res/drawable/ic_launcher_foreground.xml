@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cadence "C" mark — terracotta on warm white -->
+    <path
+        android:fillColor="#B5533C"
+        android:pathData="M68,36c0,-12.15 -9.85,-22 -22,-22s-22,9.85 -22,22c0,8.43 4.74,15.74 11.69,19.51L33.38,74.8C33.77,75.77 34.69,76.44 35.72,76.44h0.04c1.03,0 1.95,-0.67 2.34,-1.64l3.26,-7.99C44.63,69.39 48.37,70 52.22,70c12.15,0 22,-9.85 22,-22L74.22,48z"
+        android:strokeWidth="0" />
+    <!-- Pulse arc -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#B5533C"
+        android:strokeWidth="2.5"
+        android:pathData="M38,54 L44,54 L47,44 L51,62 L54,48 L57,54 L70,54" />
+</vector>

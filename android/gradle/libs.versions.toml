@@ -135,4 +135,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "macrobenchmark" }
 room = { id = "androidx.room", version.ref = "room" }
-protobuf = { id = "com.google.protobuf.kotlin.proto", version = "protoc-${protobuf}" }
+# protobuf plugin removed — not needed for Cadence
