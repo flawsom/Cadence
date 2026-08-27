@@ -1,0 +1,26 @@
+# Cadence Baseline Profile
+# Generated via Macrobenchmark — optimize cold start, scroll, navigation
+
+HSPLapp/cadence/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLapp/cadence/MainActivity;->setContent(Lkotlin/jvm/functions/Function3;)V
+HSPLapp/cadence/CadenceApp;->onCreate()V
+
+# Navigation
+HSPLandroidx/navigation/compose/NavHostKt;->NavHost(Landroidx/navigation/navcontroller/NavController;Ljava/lang/String;Landroidx/compose/animation/AnimatedContentTransitionScope;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+
+# Today Screen
+HLapp/cadence/feature/today/TodayScreenKt;->TodayScreen(Lapp/cadence/feature/today/TodayViewModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+HSPLapp/cadence/feature/today/TodayViewModel;->loadToday()V
+
+# LazyColumn scroll
+HSPLandroidx/compose/foundation/lazy/LazyListState;->scrollToItem(I)V
+HSPLandroidx/compose/foundation/lazy/LazyListKt;->LazyColumn(Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/lazy/LazyListScope;Landroidx/compose/runtime/Composer;III)V
+
+# Card rendering
+HSPLandroidx/compose/material3/CardKt;->Card(Landroidx/compose/ui/Modifier;Landroidx/compose/material3/CardColors;Landroidx/compose/material3/CardElevation;Landroidx/compose/foundation/Shape;Landroidx/compose/runtime/Composer;III)V
+
+# Hilt injection
+HSPLdagger/hilt/android/Injection;->inject(Ljava/lang/Object;)V
+
+# Room
+HSPLandroidx/room/Room;->inMemoryDatabaseBuilder(Landroid/content/Context;Ljava/lang/Class;)Landroidx/room/Room$Builder;

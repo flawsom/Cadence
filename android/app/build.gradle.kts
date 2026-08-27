@@ -1,24 +1,34 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("com.google.devtools.ksp")
-    id("com.google.gms.google-services")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
-    namespace = "com.cadence.app"
-    compileSdk = 35
+    namespace = "app.cadence"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.cadence.app"
-        minSdk = 26
-        targetSdk = 35
+        applicationId = "app.cadence"
+        minSdk = 28
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables.useSupportLibrary = true
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "keystore/release.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        }
     }
 
     buildTypes {
@@ -29,85 +39,126 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/LICENSE"
+            excludes += "/NOTICE"
+        }
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
         }
     }
 }
 
 dependencies {
-    // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2025.01.01")
-    implementation(composeBom)
+    // Core
+    implementation(project(":core:common"))
+    implementation(project(":core:network"))
+    implementation(project(":core:database"))
+    implementation(project(":core:security"))
+
+    // Features
+    implementation(project(":feature:onboarding"))
+    implementation(project(":feature:today"))
+    implementation(project(":feature:taskdetail"))
+    implementation(project(":feature:trackdetail"))
+    implementation(project(":feature:pods"))
+    implementation(project(":feature:practice"))
+    implementation(project(":feature:analytics"))
+    implementation(project(":feature:settings"))
+
+    // Sync + Widget + Notifications
+    implementation(project(":sync"))
+    implementation(project(":widget"))
+    implementation(project(":notifications"))
 
     // Compose
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3-window-size-class")
-    implementation("androidx.compose.animation:animation")
-    implementation("androidx.compose.foundation:foundation")
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.animation)
+    debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
 
-    // Activity & Navigation
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.navigation:navigation-compose:2.8.5")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    // AndroidX
+    implementation(libs.core.ktx)
+    implementation(libs.activity.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.ktx)
 
-    // Room (offline cache)
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+    implementation(libs.work.hilt)
+    ksp(libs.hilt.work.compiler)
 
-    // WorkManager (background sync)
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.performance)
 
-    // Firebase Cloud Messaging
-    implementation("com.google.firebase:firebase-messaging:24.1.0")
+    // Security
+    implementation(libs.biometric)
 
-    // Network
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // DataStore
+    implementation(libs.datastore.preferences)
 
-    // Image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    // Coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
-    // DataStore (preferences)
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
 
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    // Custom Tabs (OAuth)
+    implementation(libs.customtabs)
 
-    // Core
-    implementation("androidx.core:core-ktx:1.15.0")
+    // Baseline Profiles
+    implementation(libs.profileinstaller)
 
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    testImplementation("io.mockk:mockk:1.13.13")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation(composeBom)
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation(libs.junit5)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.coroutines.test)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test)
+    androidTestImplementation(libs.core.ktx)
 }
