@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { fmtHours, todayISO } from "@/lib/planning";
 import { useTheme } from "@/hooks/use-theme";
+import { PushNotificationToggle } from "@/components/app/PushNotificationToggle";
 import { CalendarCheck2, Flame, Library, LogOut, Moon, Sun, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
@@ -123,6 +124,7 @@ export default function Dashboard() {
               <p className="truncate text-muted-foreground">Signed in</p>
             </div>
             <div className="flex items-center gap-1">
+              <PushNotificationToggle />
               <ThemeToggle />
               <Button variant="ghost" size="icon-sm" onClick={handleSignOut} aria-label="Sign out">
                 <LogOut className="size-4" />

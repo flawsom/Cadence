@@ -1,16 +1,20 @@
 /**
- * Cadence Service Worker — offline-first caching strategy.
+ * Cadence Service Worker — offline caching + push notifications.
  *
  * Caches:
  *  - Static assets (JS, CSS, fonts) on install
  *  - Navigation requests with network-first fallback
  *  - API requests are NOT cached (Convex is real-time)
+ *
+ * Push notifications:
+ *  - Receives push from Firebase Cloud Messaging
+ *  - Shows notification with deep link
+ *  - Handles notification click to navigate to relevant screen
  */
 
-const CACHE_NAME = "cadence-v1";
-const STATIC_CACHE = "cadence-static-v1";
+const CACHE_NAME = "cadence-v2";
+const STATIC_CACHE = "cadence-static-v2";
 
-// Assets to pre-cache on install
 const PRE_CACHE = [
   "./",
   "./logo.svg",
@@ -25,7 +29,6 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  // Clean up old caches
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -38,16 +41,64 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// ── Push Notifications ────────────────────────────────────────────────────
+
+self.addEventListener("push", (event) => {
+  let data = { title: "Cadence", body: "You have a notification", url: "./dashboard" };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: "./logo.svg",
+    badge: "./logo.svg",
+    vibrate: [100, 50, 100],
+    tag: data.tag || "cadence-notification",
+    renotify: true,
+    data: { url: data.url || "./dashboard" },
+    actions: data.actions || [],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "./dashboard";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    }),
+  );
+});
+
+// ── Fetch Strategy ────────────────────────────────────────────────────────
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests and Convex API calls
   if (request.method !== "GET") return;
   if (url.pathname.includes("/api/")) return;
   if (url.hostname.includes("convex.cloud")) return;
 
-  // Navigation requests: network-first, fallback to cached index.html
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -61,7 +112,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first, then network
   if (
     url.pathname.endsWith(".js") ||
     url.pathname.endsWith(".css") ||
@@ -83,7 +133,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else: network-first
   event.respondWith(
     fetch(request)
       .then((response) => {
