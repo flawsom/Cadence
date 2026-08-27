@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.pods"
+    namespace = "unifies.cadence.feature.pods"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

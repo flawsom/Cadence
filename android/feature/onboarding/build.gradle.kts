@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.onboarding"
+    namespace = "unifies.cadence.feature.onboarding"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

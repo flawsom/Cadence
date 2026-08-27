@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.core.network"
+    namespace = "unifies.cadence.core.network"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

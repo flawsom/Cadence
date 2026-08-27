@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence"
+    namespace = "unifies.cadence"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "app.cadence"
+        applicationId = "unifies.cadence"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -43,7 +43,7 @@ android {
                 "proguard-rules.pro"
             )
             // Only use release signing if keystore exists
-            val keystoreFile = file(System.getenv("KEYSTORE_PATH") ?: "keystore/release.jks")
+            val keystoreFile = file(System.getenv("KEYSTORE_PATH") ?: "keystore/release.p12")
             if (keystoreFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }

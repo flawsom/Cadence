@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.trackdetail"
+    namespace = "unifies.cadence.feature.trackdetail"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

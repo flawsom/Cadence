@@ -1,50 +1,21 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "cadence-app",
-    "storage_bucket": "cadence-app.appspot.com"
+    "project_number": "960317374035",
+    "project_id": "cadence-d9843",
+    "storage_bucket": "cadence-d9843.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+        "mobilesdk_app_id": "1:960317374035:android:e7a333d26cfd3c2d4610a6",
         "android_client_info": {
-          "package_name": "app.cadence"
+          "package_name": "unifies.cadence"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000001",
-        "android_client_info": {
-          "package_name": "app.cadence.debug"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          "current_key": "AIzaSyB22GIqnG9xsKUFhhbAbW6NwHpa5tai1Ww"
         }
       ],
       "services": {

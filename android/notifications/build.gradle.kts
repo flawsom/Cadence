@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.notifications"
+    namespace = "unifies.cadence.notifications"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

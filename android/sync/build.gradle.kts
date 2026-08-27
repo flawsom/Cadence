@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.sync"
+    namespace = "unifies.cadence.sync"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

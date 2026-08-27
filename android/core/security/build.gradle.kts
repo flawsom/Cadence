@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.core.security"
+    namespace = "unifies.cadence.core.security"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

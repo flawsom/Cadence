@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.today"
+    namespace = "unifies.cadence.feature.today"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

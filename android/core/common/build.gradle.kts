@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.core.common"
+    namespace = "unifies.cadence.core.common"
     compileSdk = 36
 
     defaultConfig {

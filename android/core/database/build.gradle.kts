@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.core.database"
+    namespace = "unifies.cadence.core.database"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

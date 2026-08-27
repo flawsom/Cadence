@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.widget"
+    namespace = "unifies.cadence.widget"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

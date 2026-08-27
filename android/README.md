@@ -33,7 +33,7 @@ Features never depend on each other. Only core + sync.
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create project `cadence-app` (or use existing)
-3. Add Android app with package `app.cadence`
+3. Add Android app with package `unifies.cadence`
 4. Download `google-services.json` → replace `app/google-services.json`
 5. Enable Cloud Messaging in Project Settings
 

@@ -7,8 +7,8 @@
         android:shortcutShortLabel="@string/app_name">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="app.cadence"
-            android:targetClass="app.cadence.MainActivity"
+            android:targetPackage="unifies.cadence"
+            android:targetClass="unifies.cadence.MainActivity"
             android:data="cadence://today" />
     </shortcut>
 </shortcuts>

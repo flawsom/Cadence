@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.settings"
+    namespace = "unifies.cadence.feature.settings"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

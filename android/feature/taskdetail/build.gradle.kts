@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.taskdetail"
+    namespace = "unifies.cadence.feature.taskdetail"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {

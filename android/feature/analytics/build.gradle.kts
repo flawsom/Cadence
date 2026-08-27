@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "app.cadence.feature.analytics"
+    namespace = "unifies.cadence.feature.analytics"
     compileSdk = 36
     defaultConfig { minSdk = 28 }
     compileOptions {
