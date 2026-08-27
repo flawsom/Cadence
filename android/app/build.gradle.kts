@@ -135,8 +135,9 @@ dependencies {
     implementation(libs.work.hilt)
     ksp(libs.hilt.work.compiler)
 
-    // Firebase
+    // Firebase (BoM manages all versions)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.performance)

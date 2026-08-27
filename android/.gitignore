@@ -1,0 +1,33 @@
+# Firebase config (contains API keys — DO NOT COMMIT)
+app/google-services.json
+
+# Keystore (contains private keys — DO NOT COMMIT)
+keystore/
+
+# Build outputs
+build/
+app/build/
+core/*/build/
+feature/*/build/
+sync/build/
+widget/build/
+notifications/build/
+
+# Gradle
+.gradle/
+local.properties
+*.hprof
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Generated
+app/src/main/res/generated/
+
+# ProGuard mapping
+**/mapping/
+**/seeds/
+**/usage.txt
