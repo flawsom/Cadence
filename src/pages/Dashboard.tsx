@@ -105,7 +105,7 @@ export default function Dashboard() {
               <div className="text-xs leading-tight">
                 {stats.streak > 0 ? (
                   <>
-                    <span className="font-semibold">🔥 {stats.streak}-day streak</span>
+                    <span className="font-semibold">{stats.streak}-day streak</span>
                     {stats.longestStreak > stats.streak && (
                       <span className="ml-1 text-muted-foreground">· best: {stats.longestStreak}</span>
                     )}

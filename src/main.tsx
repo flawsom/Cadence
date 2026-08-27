@@ -12,7 +12,8 @@ import { createRoot } from "react-dom/client";
 // Register service worker for PWA offline caching
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    const basePath = import.meta.env.BASE_URL || "/";
+    navigator.serviceWorker.register(`${basePath}sw.js`).catch(() => undefined);
   });
 }
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";

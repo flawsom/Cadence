@@ -94,7 +94,6 @@ export default function TodayView() {
           <Flame className="size-3.5 text-chart-1" />
           {stats.streak > 0 ? (
             <>
-              <span className="text-base leading-none">🔥</span>
               <span>{stats.streak}-day streak</span>
               {stats.longestStreak > stats.streak && (
                 <span className="text-muted-foreground">· best: {stats.longestStreak}</span>
