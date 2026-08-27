@@ -105,17 +105,46 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
+      - name: Ensure Gradle wrapper exists and is executable
+        run: |
+          if [ ! -f android/gradlew ]; then
+            echo "gradlew not found — generating wrapper..."
+            cd android && gradle wrapper --gradle-version 8.11.1
+          fi
+          chmod +x android/gradlew
+
+      - name: Create placeholder google-services.json for CI
+        run: |
+          if [ ! -f android/app/google-services.json ]; then
+            cat > android/app/google-services.json << 'GSEOF'
+            {
+              "project_info": {
+                "project_number": "000000000000",
+                "project_id": "cadence-ci-placeholder",
+                "storage_bucket": "cadence-ci-placeholder.appspot.com"
+              },
+              "client": [{
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": { "package_name": "unifies.cadence" }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyD00000000000000000000000000000000" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }],
+              "configuration_version": "1"
+            }
+            GSEOF
+            echo "Created placeholder google-services.json for CI build"
+          fi
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Build release APK
         working-directory: android
-        run: ./gradlew assembleRelease
-        continue-on-error: true
+        run: ./gradlew assembleRelease --no-daemon --stacktrace || true
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
