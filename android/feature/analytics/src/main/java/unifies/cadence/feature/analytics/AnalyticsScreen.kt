@@ -184,8 +184,7 @@ private fun FullHeatmap(data: List<unifies.cadence.core.common.model.HeatmapDay>
 
     Canvas(
         modifier = Modifier
-            .fillMaxWidth()
-            .height((weeks.size * (cellSize + gap)).coerceAtMost(200.dp)),
+            .fillMaxWidth()                .height(((cellSize + gap) * weeks.size).coerceAtMost(200.dp)),
     ) {
         weeks.forEachIndexed { weekIdx, week ->
             week.forEachIndexed { dayIdx, day ->
