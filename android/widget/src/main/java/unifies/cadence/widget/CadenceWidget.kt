@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import android.content.ComponentName
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -53,7 +54,7 @@ class CadenceWidget : GlanceAppWidget() {
                 .fillMaxSize()
                 .padding(12.dp)
                 .background(ColorProvider(CadenceEmber.copy(alpha = 0.05f)))
-                .clickable(actionStartActivity("unifies.cadence", "unifies.cadence.MainActivity")),
+                .clickable(actionStartActivity(ComponentName("unifies.cadence", "unifies.cadence.MainActivity"))),
             contentAlignment = Alignment.Center,
         ) {
             Column(
