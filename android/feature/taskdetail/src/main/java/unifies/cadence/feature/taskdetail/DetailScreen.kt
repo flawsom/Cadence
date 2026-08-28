@@ -133,9 +133,9 @@ fun DetailScreen(
                             text = "Day ${task.dayNumber} · ${DateUtil.minutesToDisplay(task.estimatedMinutes)}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        if (task.reviewStage != null) {
+                        task.reviewStage?.let { stage ->
                             Text(
-                                text = task.reviewStage,
+                                text = stage,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = StatusReviewDue,
                             )
@@ -218,8 +218,9 @@ fun DetailScreen(
                                 }
                             }
                             Spacer(Modifier.height(4.dp))
+                            val challengeText = state.challenge
                             Text(
-                                text = state.challenge,
+                                text = challengeText,
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }

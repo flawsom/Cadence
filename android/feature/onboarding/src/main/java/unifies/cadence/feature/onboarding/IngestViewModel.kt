@@ -81,14 +81,17 @@ class IngestViewModel @Inject constructor(
                 val t = intent
                 _state.value { copy(syllabusText = t.text) }
             }
-            is IngestIntent.UpdatePlanName -> _state.value {
-                copy(planName = intent.text)
+            is IngestIntent.UpdatePlanName -> {
+                val n = intent
+                _state.value { copy(planName = n.name) }
             }
-            is IngestIntent.UpdateDailyHours -> _state.value {
-                copy(dailyHours = intent.hours)
+            is IngestIntent.UpdateDailyHours -> {
+                val h = intent
+                _state.value { copy(dailyHours = h.hours) }
             }
-            is IngestIntent.UpdateTotalDays -> _state.value {
-                copy(totalDays = intent.days)
+            is IngestIntent.UpdateTotalDays -> {
+                val d = intent
+                _state.value { copy(totalDays = d.days) }
             }
             is IngestIntent.UpdateSchedulingMode -> _state.value {
                 copy(schedulingMode = intent.mode)
@@ -177,12 +180,7 @@ class IngestViewModel @Inject constructor(
                         level = topic.level,
                         estimatedHours = topic.estimatedHours,
                         order = topic.order,
-                        practice = Json.encodeToString(
-                            ListSerializer(
-                                serializer<String>()
-                            ),
-                            topic.practice,
-                        ),
+                        practice = topic.practice.joinToString(","),
                         challenge = topic.challenge,
                     )
                 }
