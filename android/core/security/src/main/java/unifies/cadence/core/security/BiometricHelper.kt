@@ -108,12 +108,12 @@ class BiometricHelper @Inject constructor(
             "AndroidKeyStore",
         ).apply {
             init(
-                java.security.KeyGenParameterSpec.Builder(
+                android.security.keystore.KeyGenParameterSpec.Builder(
                     KEY_ALIAS,
-                    java.security.KeyProperties.PURPOSE_ENCRYPT or java.security.KeyProperties.PURPOSE_DECRYPT,
+                    android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or android.security.keystore.KeyProperties.PURPOSE_DECRYPT,
                 )
-                    .setBlockModes(java.security.KeyProperties.BLOCK_MODE_GCM)
-                    .setEncryptionPaddings(java.security.KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(256)
                     .setUserAuthenticationRequired(false) // Biometric gating is at prompt level
                     .apply {
