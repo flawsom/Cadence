@@ -1,7 +1,7 @@
 #!/bin/bash
 # Creates a placeholder google-services.json for CI builds.
 # Includes both release (unifies.cadence) and debug (unifies.cadence.debug) package names.
-set -euo pipefail
+set -eu
 
 TARGET="android/app/google-services.json"
 if [ -f "$TARGET" ]; then
