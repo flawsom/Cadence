@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import java.util.UUID
 import javax.inject.Inject
 
@@ -74,8 +77,9 @@ class IngestViewModel @Inject constructor(
 
     fun dispatch(intent: IngestIntent) {
         when (intent) {
-            is IngestIntent.UpdateSyllabus -> _state.value {
-                copy(syllabusText = intent.text)
+            is IngestIntent.UpdateSyllabus -> {
+                val t = intent
+                _state.value { copy(syllabusText = t.text) }
             }
             is IngestIntent.UpdatePlanName -> _state.value {
                 copy(planName = intent.text)
@@ -173,9 +177,9 @@ class IngestViewModel @Inject constructor(
                         level = topic.level,
                         estimatedHours = topic.estimatedHours,
                         order = topic.order,
-                        practice = kotlinx.serialization.json.Json.encodeToString(
-                            kotlinx.serialization.builtins.ListSerializer(
-                                kotlinx.serialization.builtins.serializer<String>()
+                        practice = Json.encodeToString(
+                            ListSerializer(
+                                serializer<String>()
                             ),
                             topic.practice,
                         ),

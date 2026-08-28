@@ -161,6 +161,7 @@ fun IngestScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InputStep(
     state: IngestState,
@@ -213,33 +214,30 @@ private fun InputStep(
             placeholder = {
                 Text("Paste your syllabus here...\n\nOr just type a subject name like \"Python\" or \"Cloud Computing\"")
             },
-            supportingRow = {
-                // PDF upload button
-                val pdfLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.OpenDocument()
-                ) { uri ->
-                    uri?.let {
-                        // TODO: Extract PDF text via pdf.js
-                        // For now, show instruction
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 8.dp),
-                ) {
-                    Icon(
-                        Icons.Default.FileUpload,
-                        null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = { pdfLauncher.launch(arrayOf("application/pdf")) }) {
-                        Text("Upload PDF syllabus")
-                    }
-                }
-            },
         )
+
+        // PDF upload button
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val pdfLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocument()
+            ) { uri ->
+                uri?.let {
+                    // TODO: Extract PDF text via pdf.js
+                }
+            }
+
+            Icon(
+                Icons.Default.FileUpload,
+                null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = { pdfLauncher.launch(arrayOf("application/pdf")) }) {
+                Text("Upload PDF syllabus")
+            }
+        }
 
         // Submit
         Button(
