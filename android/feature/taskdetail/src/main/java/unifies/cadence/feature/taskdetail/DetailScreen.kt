@@ -218,7 +218,7 @@ fun DetailScreen(
                                 }
                             }
                             Spacer(Modifier.height(4.dp))
-                            val challengeText = state.challenge
+                            val challengeText = state.challenge ?: ""
                             Text(
                                 text = challengeText,
                                 style = MaterialTheme.typography.bodyMedium,

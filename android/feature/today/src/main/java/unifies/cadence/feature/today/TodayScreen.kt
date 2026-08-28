@@ -77,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import unifies.cadence.core.common.model.Stats
 import unifies.cadence.core.common.theme.CadenceEmber
 import unifies.cadence.core.common.theme.StatusBehind
 import unifies.cadence.core.common.theme.StatusOnTrack
@@ -649,7 +650,7 @@ private fun HeatmapChart(data: List<unifies.cadence.core.common.model.HeatmapDay
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height((weeks.size * (cellSize + gap)).coerceAtMost(120.dp)),
+            .height(((cellSize + gap) * weeks.size).coerceAtMost(120.dp)),
     ) {
         weeks.forEachIndexed { weekIdx, week ->
             week.forEachIndexed { dayIdx, day ->
