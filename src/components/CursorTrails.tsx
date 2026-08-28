@@ -38,7 +38,7 @@ export function CursorTrails({ className }: { className?: string }) {
 
     // ── Physics (1:1 with the original) ────────────────────────────────────
     const isMobile = w < 768 || (navigator.maxTouchPoints ?? 0) > 0;
-    const isLowEnd = (navigator.hardwareConcurrency ?? 8) <= 4 || (navigator.deviceMemory ?? 8) <= 4;
+    const isLowEnd = (navigator.hardwareConcurrency ?? 8) <= 4 || ((navigator as any).deviceMemory ?? 8) <= 4;
     const CFG = {
       friction: 0.5,
       trails: isMobile ? 10 : isLowEnd ? 12 : 20,

@@ -95,10 +95,10 @@ export function ForgettingCurve({ accent }: { accent?: string }) {
     return schedule.reviews
       .map((r) => {
         const daysAway = diffDays(todayKey, r.dayKey);
-        const daysSinceLearned = r.learnedDaysAgo + daysAway;
+        const daysSinceLearned = (r.learnedDaysAgo ?? 0) + daysAway;
         const retention = retentionProbability(
           daysSinceLearned,
-          r.reviewStage,
+          r.reviewStage ?? 1,
         );
         return {
           ...r,
@@ -150,7 +150,7 @@ export function ForgettingCurve({ accent }: { accent?: string }) {
           >
             <MiniCurve
               retentionNow={item.retention}
-              stage={item.reviewStage}
+              stage={item.reviewStage ?? 1}
               accent={accent ?? "#E85A2A"}
             />
             <div className="min-w-0 flex-1">

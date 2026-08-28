@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addDaysToDayKey, dayKeyToUtcMs, utcMsToDayKey, diffDays } from "./lib";
+import type { DataModel, Id } from "./_generated/dataModel";
+import type { GenericMutationCtx } from "convex/server";
 
 const REVIEW_GAPS_DAYS = [1, 3, 7, 21];
 
@@ -137,9 +139,9 @@ export const setTaskDone = mutation({
 });
 
 async function spawnReviews(
-  ctx: { db: { insert: (table: string, doc: Record<string, unknown>) => Promise<unknown> } },
-  planId: string,
-  userId: string,
+  ctx: GenericMutationCtx<DataModel>,
+  planId: Id<"plans">,
+  userId: Id<"users">,
   topicTitle: string,
   learnHours: number,
   fromDayKey: string,
