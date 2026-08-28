@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { fmtHours, todayISO } from "@/lib/planning";
 import { useTheme } from "@/hooks/use-theme";
 import { PushNotificationToggle } from "@/components/app/PushNotificationToggle";
-import { CalendarCheck2, Flame, Library, LogOut, Moon, Sun, Users } from "lucide-react";
+import { CalendarCheck2, BookOpenCheck, Flame, Library, LogOut, Moon, Sun, Users } from "lucide-react";
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/dashboard", label: "Today", icon: CalendarCheck2, end: true },
   { to: "/dashboard/plans", label: "Plans", icon: Library, end: false },
   { to: "/dashboard/pod", label: "Pod", icon: Users, end: false },
+  { to: "/dashboard/answers", label: "Answers", icon: BookOpenCheck, end: false },
 ];
 
 export default function Dashboard() {

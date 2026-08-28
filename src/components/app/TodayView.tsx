@@ -1,5 +1,7 @@
+import { ForgettingCurve } from "@/components/app/ForgettingCurve";
 import { Heatmap } from "@/components/app/Heatmap";
 import { ReviewTodayCard } from "@/components/app/ReviewTodayCard";
+import { StreakCelebration } from "@/components/app/StreakCelebration";
 import { TrendChart } from "@/components/app/TrendChart";
 import { TaskRow } from "@/components/app/TaskRow";
 import { Button } from "@/components/ui/button";
@@ -90,19 +92,15 @@ export default function TodayView() {
 
       {/* Live stats */}
       <section className="flex flex-wrap items-center gap-2.5">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium">
+        {stats.streak > 0 ? (
+          <StreakCelebration streak={stats.streak} />
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium">
           <Flame className="size-3.5 text-chart-1" />
-          {stats.streak > 0 ? (
-            <>
-              <span>{stats.streak}-day streak</span>
-              {stats.longestStreak > stats.streak && (
-                <span className="text-muted-foreground">· best: {stats.longestStreak}</span>
-              )}
-            </>
-          ) : (
             <span>Start your streak today</span>
-          )}
-        </span>
+          </span>
+        )}
+
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium">
           <Repeat2 className="size-3.5 text-chart-2" />
           {stats.reviewsDueToday > 0
@@ -135,6 +133,9 @@ export default function TodayView() {
           }}
         />
       )}
+
+      {/* Forgetting Curve — memory decay visualization */}
+      <ForgettingCurve />
 
       {/* Progress: interactive heatmap + trend line, switchable */}
       <section>

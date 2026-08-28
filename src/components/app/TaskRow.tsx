@@ -1,4 +1,5 @@
 import { MathText } from "@/components/MathText";
+import { PomodoroTimer } from "@/components/app/PomodoroTimer";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -179,6 +180,10 @@ export function TaskRow({
                   )}
                 </div>
               )}
+              {/* Pomodoro focus timer */}
+              <div className="mt-2 flex justify-center">
+                <PomodoroTimer />
+              </div>
             </div>
           </motion.div>
         )}

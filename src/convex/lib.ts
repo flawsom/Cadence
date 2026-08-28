@@ -67,6 +67,10 @@ export function addDaysToDayKey(key: string, n: number): string {
   return utcMsToDayKey(dayKeyToUtcMs(key) + n * DAY_MS);
 }
 
+export function diffDays(a: string, b: string): number {
+  return Math.round((dayKeyToUtcMs(b) - dayKeyToUtcMs(a)) / DAY_MS);
+}
+
 // ---------------------------------------------------------------------------
 // Syllabus ingestion — deterministic engine (the always-works fallback)
 //

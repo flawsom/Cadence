@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { addDaysToDayKey, dayKeyToUtcMs, utcMsToDayKey } from "./lib";
+import { addDaysToDayKey, dayKeyToUtcMs, utcMsToDayKey, diffDays } from "./lib";
 
 const REVIEW_GAPS_DAYS = [1, 3, 7, 21];
 
@@ -137,9 +137,9 @@ export const setTaskDone = mutation({
 });
 
 async function spawnReviews(
-  ctx: { db: any },
-  planId: any,
-  userId: any,
+  ctx: { db: { insert: (table: string, doc: Record<string, unknown>) => Promise<unknown> } },
+  planId: string,
+  userId: string,
   topicTitle: string,
   learnHours: number,
   fromDayKey: string,
@@ -233,5 +233,51 @@ export const getStats = query({
         tasks.filter((t) => t.status === "done").reduce((s, t) => s + t.hours, 0),
       ),
     };
+  },
+});
+
+// ── Review schedule for forgetting curve ───────────────────────────────────
+
+export const getReviewSchedule = query({
+  args: {
+    todayKey: v.string(),
+    lookaheadDays: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    // Fetch all review tasks (open and future-dated)
+    const allTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const reviews = allTasks
+      .filter((t) => t.kind === "review" && typeof t.reviewStage === "number")
+      .filter((t) => {
+        const dayDiff = diffDays(args.todayKey, t.dayKey);
+        return dayDiff >= -7 && dayDiff <= args.lookaheadDays;
+      })
+      .map((t) => {
+        // Find the corresponding learn task to determine when the topic was learned
+        const learnTask = allTasks.find(
+          (lt) => lt.kind === "learn" && lt.title === t.title.replace(/^Review:\s*/, ""),
+        );
+        const learnedDayKey = learnTask?.doneDayKey ?? t.dayKey;
+        const learnedDaysAgo = diffDays(learnedDayKey, args.todayKey);
+
+        return {
+          taskId: t._id,
+          title: t.title.replace(/^Review:\s*/, ""),
+          reviewStage: t.reviewStage,
+          dayKey: t.dayKey,
+          status: t.status,
+          hours: t.hours,
+          learnedDaysAgo: Math.abs(learnedDaysAgo),
+        };
+      });
+
+    return { reviews };
   },
 });

@@ -53,6 +53,7 @@ const PlanDetailView = lazyRoute(() =>
   import("./components/app/PlanDetailView.tsx"),
 );
 const PodView = lazyRoute(() => import("./components/app/PodView.tsx"));
+const AnswerHistory = lazyRoute(() => import("./components/app/AnswerHistoryView.tsx"));
 const NotFound = lazyRoute(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -179,6 +180,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="plans" element={<PlansView />} />
                 <Route path="plans/:planId" element={<PlanDetailView />} />
                 <Route path="pod" element={<PodView />} />
+                <Route path="answers" element={<AnswerHistory />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -37,10 +37,12 @@ export function CursorTrails({ className }: { className?: string }) {
     resize();
 
     // ── Physics (1:1 with the original) ────────────────────────────────────
+    const isMobile = w < 768 || (navigator.maxTouchPoints ?? 0) > 0;
+    const isLowEnd = (navigator.hardwareConcurrency ?? 8) <= 4 || (navigator.deviceMemory ?? 8) <= 4;
     const CFG = {
       friction: 0.5,
-      trails: 20,
-      size: 50,
+      trails: isMobile ? 10 : isLowEnd ? 12 : 20,
+      size: isMobile ? 25 : isLowEnd ? 30 : 50,
       dampening: 0.25,
       tension: 0.98,
     };
@@ -188,8 +190,10 @@ export function CursorTrails({ className }: { className?: string }) {
     };
 
     document.addEventListener("mousemove", onMove, { passive: true });
-    document.addEventListener("touchstart", onTouch, { passive: true });
-    document.addEventListener("touchmove", onTouch, { passive: true });
+    if (isMobile) {
+      document.addEventListener("touchstart", onTouch, { passive: true });
+      document.addEventListener("touchmove", onTouch, { passive: true });
+    }
     window.addEventListener("resize", resize);
     window.addEventListener("focus", start);
     window.addEventListener("blur", () => {
@@ -208,6 +212,7 @@ export function CursorTrails({ className }: { className?: string }) {
       window.removeEventListener("resize", resize);
       window.removeEventListener("focus", start);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

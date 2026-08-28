@@ -5,6 +5,7 @@ import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { buildBoards } from "./pods";
 import { todayISO } from "../lib/planning";
+import type { Id } from "./_generated/dataModel";
 
 const crons = cronJobs();
 
@@ -110,17 +111,22 @@ export const sendReviewReminders = mutation({
   args: {},
   handler: async (ctx) => {
     const todayKey = todayISO();
-    const usersWithReviews = new Map<any, number>();
+    const usersWithReviews = new Map<Id<"users">, number>();
 
-    // Find all review tasks due today (filter in memory since index requires userId first)
-    const allTasks = await ctx.db.query("tasks").collect();
-    const reviewTasks = allTasks.filter((t) => t.dayKey === todayKey && t.kind === "review" && t.status === "open");
+    // Use the by_plan index on tasks — iterate all plans first, then scan per-plan.
+    // This avoids the O(all_tasks) full scan that was here before.
+    const plans = await ctx.db.query("plans").collect();
+    for (const plan of plans) {
+      const planTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_plan", (q) => q.eq("planId", plan._id))
+        .collect();
 
-    for (const task of reviewTasks) {
-      if (task.kind === "review" && task.status === "open") {
-        const uid = task.userId as any;
-        const count = usersWithReviews.get(uid) || 0;
-        usersWithReviews.set(uid, count + 1);
+      for (const task of planTasks) {
+        if (task.dayKey === todayKey && task.kind === "review" && task.status === "open") {
+          const count = usersWithReviews.get(task.userId) || 0;
+          usersWithReviews.set(task.userId, count + 1);
+        }
       }
     }
 
@@ -128,12 +134,11 @@ export const sendReviewReminders = mutation({
     for (const [userId, reviewCount] of usersWithReviews) {
       const subs = await ctx.db
         .query("pushSubscriptions")
-        .withIndex("by_user", (q) => q.eq("userId", userId as any))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .collect();
 
       if (subs.length === 0) continue;
 
-      // Store the notification intent — the push delivery happens via the action
       const payload = {
         title: "Review time! 📚",
         body: `You have ${reviewCount} review${reviewCount > 1 ? "s" : ""} due today. Keep your retention strong!`,
@@ -141,7 +146,6 @@ export const sendReviewReminders = mutation({
         tag: "review-" + todayKey,
       };
 
-      // Fire-and-forget: schedule the push delivery
       await ctx.scheduler.runAfter(0, api.actions.pushDelivery.sendPushBatch, {
         subscriptions: subs.map((s) => ({
           endpoint: s.endpoint,
@@ -165,43 +169,59 @@ export const sendStreakAlerts = mutation({
   args: {},
   handler: async (ctx) => {
     const todayKey = todayISO();
-    const usersToAlert = new Map<any, number>(); // userId -> streak length
+    const usersToAlert = new Map<Id<"users">, number>(); // userId -> streak length
 
-    // Find users with active plans
-    const allTasks = await ctx.db.query("tasks").collect();
-    const userTaskCounts = new Map<any, Set<string>>();
-    for (const task of allTasks) {
-      if (task.status === "done" && task.doneDayKey === todayKey) {
-        const uid = task.userId as any;
-        if (!userTaskCounts.has(uid)) userTaskCounts.set(uid, new Set());
-        userTaskCounts.get(uid)!.add(task._id);
+    // Find users with active plans, then scan their tasks via index.
+    const plans = await ctx.db.query("plans").collect();
+    const userDoneToday = new Map<Id<"users">, Set<string>>();
+    const userOpenToday = new Map<Id<"users">, Set<string>>();
+
+    for (const plan of plans) {
+      const planTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_plan", (q) => q.eq("planId", plan._id))
+        .collect();
+
+      for (const task of planTasks) {
+        if (task.dayKey === todayKey) {
+          if (task.status === "done" && task.doneDayKey === todayKey) {
+            if (!userDoneToday.has(task.userId)) userDoneToday.set(task.userId, new Set());
+            userDoneToday.get(task.userId)!.add(task._id);
+          }
+          if (task.status === "open") {
+            if (!userOpenToday.has(task.userId)) userOpenToday.set(task.userId, new Set());
+            userOpenToday.get(task.userId)!.add(task._id);
+          }
+        }
       }
     }
 
-    // Check which users have open tasks but haven't completed any today
-    const openTasks = allTasks.filter((t) => t.status === "open" && t.dayKey === todayKey);
-    for (const task of openTasks) {
-      const uid = task.userId as any;
-      const completedToday = userTaskCounts.get(uid);
+    // Users with open tasks but nothing completed today need a nudge
+    for (const [userId] of userOpenToday) {
+      const completedToday = userDoneToday.get(userId);
       if (!completedToday || completedToday.size === 0) {
-        const existing = usersToAlert.get(uid) || 0;
-        usersToAlert.set(uid, Math.max(existing, 1));
+        const existing = usersToAlert.get(userId) || 0;
+        usersToAlert.set(userId, Math.max(existing, 1));
       }
     }
 
-    // Get streak data for these users
     let alerted = 0;
     for (const [userId] of usersToAlert) {
       const subs = await ctx.db
         .query("pushSubscriptions")
-        .withIndex("by_user", (q) => q.eq("userId", userId as any))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .collect();
 
       if (subs.length === 0) continue;
 
-      // Count consecutive done days (rough streak check)
-      const userTasks = allTasks.filter((t) => t.userId === userId && t.status === "done");
-      const doneDays = new Set(userTasks.map((t) => t.doneDayKey).filter(Boolean));
+      // Count consecutive done days for streak calculation (index-based)
+      const userTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect();
+      const doneDays = new Set(
+        userTasks.filter((t) => t.status === "done" && t.doneDayKey).map((t) => t.doneDayKey!)
+      );
       let streak = 0;
       const d = new Date();
       for (let i = 0; i < 365; i++) {

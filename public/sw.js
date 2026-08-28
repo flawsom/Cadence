@@ -74,18 +74,28 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || "./dashboard";
+  const rawUrl = event.notification.data?.url || "/dashboard";
+  // Resolve relative URLs against the service worker scope (the app root)
+  const resolvedUrl = new URL(rawUrl, self.registration.scope).href;
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(url);
-          return client.focus();
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        // Focus an existing open window if one matches the app origin
+        for (const client of windowClients) {
+          if (
+            client.url.startsWith(self.registration.scope) &&
+            "focus" in client
+          ) {
+            // Navigate the existing tab to the target deep link, then focus it
+            client.navigate(resolvedUrl);
+            return client.focus();
+          }
         }
-      }
-      return clients.openWindow(url);
-    }),
+        // No matching window — open a new tab
+        return clients.openWindow(resolvedUrl);
+      }),
   );
 });
 
