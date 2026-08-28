@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,11 +35,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -166,11 +169,11 @@ fun PracticeScreen(
                             Text("Feedback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             Spacer(Modifier.height(4.dp))
                             Text(eval.feedback, style = MaterialTheme.typography.bodyMedium)
-                            if (eval.improvedAnswer != null) {
+                            eval.improvedAnswer?.let { improved ->
                                 Spacer(Modifier.height(12.dp))
                                 Text("Suggested Answer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                 Spacer(Modifier.height(4.dp))
-                                Text(eval.improvedAnswer, style = MaterialTheme.typography.bodyMedium)
+                                Text(improved, style = MaterialTheme.typography.bodyMedium)
                             }
                             Spacer(Modifier.height(12.dp))
                             Button(onClick = { viewModel.nextQuestion() }, modifier = Modifier.fillMaxWidth()) {
@@ -217,7 +220,4 @@ fun PracticeScreen(
     }
 }
 
-@Composable
-private fun Box(contentAlignment: Alignment, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    androidx.compose.foundation.layout.Box(modifier = modifier, contentAlignment = contentAlignment) { content() }
-}
+
